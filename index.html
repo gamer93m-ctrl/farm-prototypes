@@ -444,8 +444,16 @@ const EDGE_DELAY = 400, EDGE_REPEAT = 700;
 let edgeTimer = null, edgeDir = 0;
 
 function edgeScroll(x){
-  if(MODES[state.mode] === 1) return stopEdgeScroll();
-  const dir = x <= 36 ? -1 : x >= 324 ? 1 : 0;
+  if(!drag || MODES[state.mode] === 1) return stopEdgeScroll();
+
+  let dir = x <= 36 ? -1 : x >= 324 ? 1 : 0;
+
+  // листать некуда — зону не взводим, иначе мигает впустую на крайних блоках
+  if(dir){
+    const next = anchorBlock + dir;
+    if(next < 0 || next > MODES[state.mode] - 1) dir = 0;
+  }
+
   if(dir === edgeDir) return;                 // направление не изменилось
   stopEdgeScroll();
   edgeDir = dir;
@@ -454,10 +462,11 @@ function edgeScroll(x){
   const zone = $(dir < 0 ? '.fade.l' : '.fade.r');
   zone.classList.add('armed');
   const step = () => {
-    const at = currentBlock();
-    const next = at + edgeDir;
+    const next = anchorBlock + edgeDir;
     if(next < 0 || next > MODES[state.mode] - 1) return stopEdgeScroll();
     goToBlock(next);
+    // на крайнем блоке дальше не тикаем — подсветка гаснет сама
+    if(next === 0 || next === MODES[state.mode] - 1) return stopEdgeScroll();
     edgeTimer = setTimeout(step, EDGE_REPEAT);
   };
   edgeTimer = setTimeout(step, EDGE_DELAY);
@@ -582,7 +591,14 @@ tip.addEventListener('click', e => {
 document.addEventListener('pointerdown', e => {
   if(!e.target.closest('#tip') && !e.target.closest('.cell')) hideTip();
 });
-scroller.addEventListener('scroll', () => { hideTip(); updatePager(); }, {passive:true});
+let settleTimer = null;
+scroller.addEventListener('scroll', () => {
+  hideTip();
+  updatePager();
+  // прокрутка улеглась — подтягиваем якорь под факт (свайп, жест пейджера)
+  clearTimeout(settleTimer);
+  settleTimer = setTimeout(() => { anchorBlock = currentBlock(); }, 140);
+}, {passive:true});
 
 /* ═══════════ ТИК ═══════════ */
 
@@ -617,10 +633,14 @@ const currentBlock = () => {
   return s > 0 ? Math.round(scroller.scrollLeft / s) : 0;
 };
 
+/* Куда мы едем сейчас. Во время плавной прокрутки scrollLeft отстаёт,
+   поэтому решения о границах принимаем по якорю, а не по факту. */
+let anchorBlock = 0;
+
 function goToBlock(i){
   const n = MODES[state.mode];
-  const t = Math.max(0, Math.min(n - 1, i));
-  scroller.scrollTo({ left: t * blockStep(), behavior:'smooth' });
+  anchorBlock = Math.max(0, Math.min(n - 1, i));
+  scroller.scrollTo({ left: anchorBlock * blockStep(), behavior:'smooth' });
 }
 
 /* — жест 2: тап по краю — */
@@ -709,6 +729,8 @@ function buildSkeleton(){
 function render(){
   hideTip();
   selCell = null;
+  anchorBlock = 0;
+  stopEdgeScroll();
   buildSkeleton();
   skeleton.classList.add('on');
   buildGrid();
