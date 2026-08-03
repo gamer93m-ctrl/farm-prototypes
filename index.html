@@ -289,12 +289,17 @@ const skeleton = $('#skeleton');
 const freeEl = $('#free'), collectTool = $('#collect');
 const cellEls = [];
 
-/* масштабирование под маленькие экраны — макет остаётся 360×780 */
+/* Макет свёрстан в координатах 360×780 и целиком масштабируется под экран:
+   на телефоне растягивается во весь экран, на десктопе ужимается. */
 function fit(){
-  const s = Math.min(1, innerWidth/360, innerHeight/780);
-  phone.style.transform = `scale(${s})`;
+  const vv = window.visualViewport;
+  const w = vv ? vv.width  : innerWidth;
+  const h = vv ? vv.height : innerHeight;
+  phone.style.transform = `scale(${Math.min(w/360, h/780)})`;
 }
 addEventListener('resize', fit);
+addEventListener('orientationchange', fit);
+window.visualViewport?.addEventListener('resize', fit);
 
 /* ─── сетка ─── */
 
