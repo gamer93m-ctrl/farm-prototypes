@@ -321,7 +321,8 @@
       <div class="row" id="directRow" hidden>
         <div class="label">КАК ОТЛИЧАТЬ СБОР ОТ ПРОКРУТКИ</div>
         <div class="seg">
-          <button data-set="direct:dir">Направление</button>
+          <button data-set="direct:free">Водишь пальцем</button>
+          <button data-set="direct:start">С готовой</button>
           <button data-set="direct:hold">Удержание</button>
         </div>
         <div class="hint" id="directHint"></div>
@@ -859,9 +860,10 @@ function updatePager(){
 const CFG_KEY = 'generator-proto-cfg';
 const settings = $('#settings');
 
-let cfg = { collect:'tool', direct:'dir' };
+let cfg = { collect:'tool', direct:'free' };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem(CFG_KEY)) || {}); } catch {}
-if(cfg.direct !== 'hold') cfg.direct = 'dir';   // вариант «тап» убран: 100 ячеек по одной не натыкать
+// убранные варианты («тап», «направление») переезжают на свободное заметание
+if(!['free','start','hold'].includes(cfg.direct)) cfg.direct = 'free';
 const saveCfg = () => localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
 
 const HINTS = {
@@ -870,8 +872,9 @@ const HINTS = {
     direct: 'Ручки нет, ячейку трогаешь напрямую. Ниже — чем отличать сбор от прокрутки.'
   },
   direct: {
-    dir: 'Первое движение решает: вбок — листаешь блоки, вверх-вниз — ведёшь и собираешь всё под пальцем. Без задержек и режимов.',
-    hold:'Задержал палец на ячейке — прокрутка блокируется, дальше ведёшь и собираешь пачкой. Быстрый тап собирает одну.'
+    free: 'Ведёшь пальцем по сетке — собирается всё готовое под ним. Свайп по сетке больше не листает: блоки переключаются краями экрана и пейджером.',
+    start:'Начал с готовой ячейки — собираешь заметанием. Начал с пустой или растущей — обычный свайп листает блоки.',
+    hold: 'Задержал палец на ячейке — прокрутка блокируется, дальше ведёшь и собираешь пачкой. Быстрый тап собирает одну.'
   }
 };
 
@@ -926,8 +929,16 @@ scroller.addEventListener('pointerdown', e => {
   if(cfg.collect !== 'direct' || drag) return;
   const cell = e.target.closest('.cell');
   if(!cell) return;
-  dc = { idx:+cell.dataset.idx, x:e.clientX, y:e.clientY, moved:false, sweeping:false, timer:null };
-  if(cfg.direct === 'hold'){
+  const idx = +cell.dataset.idx;
+  dc = { idx, x:e.clientX, y:e.clientY, moved:false, sweeping:false, timer:null };
+
+  if(cfg.direct === 'free'){
+    // сетка целиком отдана под сбор, листание — краями и пейджером
+    startSweep();
+  } else if(cfg.direct === 'start'){
+    // решает стартовая ячейка: готовая — собираем, любая другая — листаем
+    if(state.cells[idx].state === 'ready') startSweep();
+  } else {
     dc.timer = setTimeout(() => { if(dc && !dc.moved) startSweep(); }, HOLD_MS);
   }
 });
@@ -940,16 +951,22 @@ document.addEventListener('pointermove', e => {
 
   if(!dc.moved && Math.hypot(dx, dy) > MOVE_TOL){
     dc.moved = true;
-    clearTimeout(dc.timer);
-    // «направление»: вертикаль — сбор, горизонталь — отдаём прокрутке
-    if(cfg.direct === 'dir' && Math.abs(dy) > Math.abs(dx)) startSweep();
+    clearTimeout(dc.timer);   // сдвинулся раньше задержки — это прокрутка
   }
   if(dc.sweeping){ e.preventDefault(); sweepAt(e.clientX, e.clientY); }
 }, {passive:false});
 
+/* Блокировка прокрутки на время заметания. Позицию сохраняем руками:
+   смена overflow сбрасывает scrollLeft, и сетка прыгала бы на первый блок. */
+function lockScroll(on){
+  const x = scroller.scrollLeft;
+  scroller.style.overflowX = on ? 'hidden' : '';
+  scroller.scrollLeft = x;
+}
+
 function startSweep(){
   dc.sweeping = true;
-  scroller.style.overflowX = 'hidden';   // на время заметания прокрутка выключена
+  lockScroll(true);
   sweepAt(dc.x, dc.y);
 }
 
@@ -969,7 +986,7 @@ function endDirect(){
     collect(dc.idx);
     swallowClick = true;
   }
-  scroller.style.overflowX = '';
+  lockScroll(false);
   dc = null;
 }
 document.addEventListener('pointerup', endDirect);
