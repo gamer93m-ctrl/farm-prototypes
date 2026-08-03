@@ -11,12 +11,13 @@
     --tui-status-info:#428bf9;
     --cell-bg:rgba(255,255,255,.1);        /* tui-background-neutral-1-on-dark */
     --cell-radius:6px;
+    /* размер ячейки считается в fit() под доступную высоту, 56 — потолок из макета */
     --cell-size:56px;
     --cell-gap:2px;
     --block-w:288px;                        /* 5×56 + 4×2 */
     --block-gap:20px;
     --grid-left:36px;
-    --grid-top:216px;
+    --stage-pad:16px;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
   html,body{margin:0;padding:0;height:100%;background:#000;overflow:hidden;overscroll-behavior:none}
@@ -36,6 +37,17 @@
   .statusbar{position:relative;flex:0 0 44px}
   #phone.compact .statusbar,
   #phone.compact #homebar{display:none}   /* мало высоты — убираем бутафорию */
+  /* и поджимаем всё вокруг сетки: чем меньше уйдёт на обвязку,
+     тем крупнее ячейки и тем полнее сетка занимает ширину */
+  #phone.compact .titlewrap{padding:2px 16px 10px}
+  #phone.compact #title{font-size:22px;line-height:26px}
+  #phone.compact #desc{margin-top:8px;font-size:15px}
+  #phone.compact .controls{flex-basis:44px;margin-top:10px}
+  #phone.compact #pager{top:12px}
+  #phone.compact #collect{width:44px;height:44px;font-size:26px}
+  #phone.compact #tray{padding-top:14px;padding-bottom:14px}
+  #phone.compact .seed{width:64px;height:64px}
+  #phone.compact .seed img{width:58px;height:58px}
   #time{position:absolute;left:34px;top:12px;font-size:15px;font-weight:600;letter-spacing:-.2px}
   #sysicons{position:absolute;right:14px;top:15px;font-size:11px;letter-spacing:1px;opacity:.95}
 
@@ -73,8 +85,11 @@
   #desc{margin-top:18px;font-size:17px;letter-spacing:-.41px;color:#8e8e93}
 
   /* ─── сетка блоков ─── */
-  /* сетка забирает всю свободную высоту и стоит в ней по центру */
-  #stage{flex:1 1 auto;position:relative;display:flex;align-items:center;min-height:0}
+  /* сетка забирает свободную высоту, минимальные поля сверху и снизу гарантированы */
+  #stage{
+    flex:1 1 auto;position:relative;display:flex;align-items:center;
+    min-height:0;padding:var(--stage-pad) 0;
+  }
   #scroller{
     width:100%;height:var(--block-w);
     display:flex;gap:var(--block-gap);padding:0 var(--grid-left);
@@ -99,7 +114,8 @@
   .cell.sel::before{
     content:"";position:absolute;inset:0;background:rgba(66,139,249,.2);z-index:2;
   }
-  .cell img{width:40px;height:40px;object-fit:contain;pointer-events:none;position:relative}
+  /* доля от ячейки, а не фикс — ячейка меняет размер под экран */
+  .cell img{width:71%;height:71%;object-fit:contain;pointer-events:none;position:relative}
   .cell.growing img{opacity:.4}
   .cell .arc{position:absolute;inset:0;transform:rotate(-90deg);pointer-events:none}
 
@@ -110,7 +126,7 @@
   /* края (33px, узлы 2:14144 / 2:14145): прозрачные тап-зоны прокрутки.
      Ничего не затемняют — соседний блок должен быть видно. */
   .fade{
-    position:absolute;top:0;bottom:0;width:33px;z-index:3;
+    position:absolute;top:0;bottom:0;width:var(--grid-left);z-index:3;
     border:0;padding:0;background:none;cursor:pointer;
     -webkit-tap-highlight-color:transparent;
   }
@@ -313,20 +329,52 @@ const cellEls = [];
 /* Макет свёрстан в координатах 360×780 и целиком масштабируется под экран:
    на телефоне растягивается во весь экран, на десктопе ужимается. */
 const DESIGN_W = 360;
-const COMPACT_H = 700;   // ниже этого прячем бутафорские статус-бар и home bar
+/* Полная обвязка (статус-бар, app bar, заголовок, контролы, лоток, home bar)
+   съедает 430 единиц. Сетке нужно 288 плюс поля 32 — значит полный вариант
+   имеет смысл только от 750. Ниже переключаемся на компактный, иначе на
+   границе ячейки становились мельче, чем в компактном режиме. */
+const COMPACT_H = 750;
+const MIN_H = 560;       // минимальная высота в единицах макета, ниже не ужимаемся
+const CELL_MAX = 56;     // размер из макета — потолок, а не константа
+const CELL_MIN = 34;
+
+const stage = $('#stage');
+const root = document.documentElement;
 
 function fit(){
   const vv = window.visualViewport;
   const w = vv ? vv.width  : innerWidth;
   const h = vv ? vv.height : innerHeight;
 
-  // ширина всегда ровно 360 единиц макета — размеры ячеек остаются как в Figma
-  const s = w / DESIGN_W;
-  const layoutH = h / s;                     // сколько высоты дал экран, в единицах макета
+  // Тянемся по ширине, но не настолько, чтобы высоты осталось меньше MIN_H:
+  // иначе в широком окне десктопа «телефон» раздувался бы на весь экран.
+  const s = Math.min(w / DESIGN_W, h / MIN_H);
+  const layoutH = h / s;                    // высота экрана в единицах макета
 
   phone.classList.toggle('compact', layoutH < COMPACT_H);
   phone.style.height = layoutH + 'px';
+  phone.style.left = Math.round((w - DESIGN_W * s) / 2) + 'px';
   phone.style.transform = `scale(${s})`;
+
+  sizeGrid();
+}
+
+/* Ячейка подгоняется под то, что осталось между шапкой и лотком.
+   Сетка всегда квадратная 5×5 и целиком помещается — без обрезки и без
+   упирания в подзаголовок. Поля --stage-pad уже вычтены самим stage. */
+function sizeGrid(){
+  const avail = stage.clientHeight;          // padding уже учтён в clientHeight
+  const pad = parseFloat(getComputedStyle(stage).paddingTop) * 2;
+  const usable = avail - pad;
+
+  const gap = 2;
+  let cell = Math.floor((usable - gap * 4) / 5);
+  cell = Math.max(CELL_MIN, Math.min(CELL_MAX, cell));
+
+  const blockW = cell * 5 + gap * 4;
+  root.style.setProperty('--cell-size', cell + 'px');
+  root.style.setProperty('--block-w', blockW + 'px');
+  root.style.setProperty('--grid-left', Math.round((DESIGN_W - blockW) / 2) + 'px');
 }
 addEventListener('resize', fit);
 addEventListener('orientationchange', fit);
