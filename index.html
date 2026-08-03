@@ -603,7 +603,9 @@ const EDGE_DELAY = 400, EDGE_REPEAT = 700;
 let edgeTimer = null, edgeDir = 0;
 
 function edgeScroll(x){
-  if(!drag || MODES[state.mode] === 1) return stopEdgeScroll();
+  // работает и при перетаскивании ресурса, и при заметании сбора
+  const active = drag || (dc && dc.sweeping);
+  if(!active || MODES[state.mode] === 1) return stopEdgeScroll();
 
   let dir = x <= 36 ? -1 : x >= 324 ? 1 : 0;
 
@@ -953,7 +955,13 @@ document.addEventListener('pointermove', e => {
     dc.moved = true;
     clearTimeout(dc.timer);   // сдвинулся раньше задержки — это прокрутка
   }
-  if(dc.sweeping){ e.preventDefault(); sweepAt(e.clientX, e.clientY); }
+  if(dc.sweeping){
+    e.preventDefault();
+    sweepAt(e.clientX, e.clientY);
+    // у края блоки листаются, не отрывая палец — как при посеве
+    const pr = phone.getBoundingClientRect();
+    edgeScroll((e.clientX - pr.left) / (pr.width / 360));
+  }
 }, {passive:false});
 
 /* Блокировка прокрутки на время заметания. Позицию сохраняем руками:
@@ -988,6 +996,7 @@ function endDirect(){
   }
   lockScroll(false);
   dc = null;
+  stopEdgeScroll();
 }
 document.addEventListener('pointerup', endDirect);
 document.addEventListener('pointercancel', endDirect);
