@@ -20,29 +20,35 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
   html,body{margin:0;padding:0;height:100%;background:#000;overflow:hidden;overscroll-behavior:none}
-  body{display:grid;place-items:center}
 
-  /* ═══ экран 360×780, всё позиционируется абсолютно как в макете ═══ */
+  /* ═══ Экран живёт в координатах макета: ширина всегда ровно 360,
+     высота — сколько дал экран. Горизонтальные размеры из Figma
+     сохраняются точно, вертикальные зазоры тянутся. ═══ */
   #phone{
-    width:360px;height:780px;background:#000;position:relative;overflow:hidden;
-    transform-origin:center center;
+    position:absolute;left:0;top:0;width:360px;background:#000;overflow:hidden;
+    transform-origin:0 0;
+    display:flex;flex-direction:column;
     font:400 17px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",system-ui,sans-serif;
     color:#fff;
   }
 
   /* ─── status bar (44) ─── */
+  .statusbar{position:relative;flex:0 0 44px}
+  #phone.compact .statusbar,
+  #phone.compact #homebar{display:none}   /* мало высоты — убираем бутафорию */
   #time{position:absolute;left:34px;top:12px;font-size:15px;font-weight:600;letter-spacing:-.2px}
   #sysicons{position:absolute;right:14px;top:15px;font-size:11px;letter-spacing:1px;opacity:.95}
 
-  /* ─── app bar (44..88) ─── */
+  /* ─── app bar (44) ─── */
+  .appbar{position:relative;flex:0 0 44px}
   #back{
-    position:absolute;left:8px;top:54px;width:12px;height:24px;border:0;background:none;padding:0;
+    position:absolute;left:8px;top:10px;width:12px;height:24px;border:0;background:none;padding:0;
     cursor:pointer;color:var(--tui-text-action);font-size:26px;line-height:24px;font-weight:300;
   }
 
   /* ─── бейджи: widget @140,44 · 220×44, px16 py8 gap12 ─── */
   #widget{
-    position:absolute;right:16px;top:52px;height:28px;
+    position:absolute;right:16px;top:8px;height:28px;
     display:flex;gap:12px;align-items:center;
   }
   .badge{
@@ -59,16 +65,18 @@
   #ring b{font-size:13px;font-weight:600;letter-spacing:-.08px}
 
   /* ─── заголовок ─── */
+  .titlewrap{flex:0 0 auto;padding:4px 16px 26px}
   #title{
-    position:absolute;left:16px;top:92px;
     font-family:-apple-system,"SF Pro Display",system-ui,sans-serif;
     font-size:30px;font-weight:700;letter-spacing:.36px;line-height:36px;
   }
-  #desc{position:absolute;left:16px;top:146px;font-size:17px;letter-spacing:-.41px;color:#8e8e93}
+  #desc{margin-top:18px;font-size:17px;letter-spacing:-.41px;color:#8e8e93}
 
   /* ─── сетка блоков ─── */
+  /* сетка забирает всю свободную высоту и стоит в ней по центру */
+  #stage{flex:1 1 auto;position:relative;display:flex;align-items:center;min-height:0}
   #scroller{
-    position:absolute;left:0;top:var(--grid-top);width:360px;height:var(--block-w);
+    width:100%;height:var(--block-w);
     display:flex;gap:var(--block-gap);padding:0 var(--grid-left);
     overflow-x:auto;scroll-snap-type:x mandatory;
     scrollbar-width:none;overscroll-behavior-x:contain;
@@ -102,7 +110,7 @@
   /* края (33px, узлы 2:14144 / 2:14145): прозрачные тап-зоны прокрутки.
      Ничего не затемняют — соседний блок должен быть видно. */
   .fade{
-    position:absolute;top:191px;width:33px;height:344px;z-index:3;
+    position:absolute;top:0;bottom:0;width:33px;z-index:3;
     border:0;padding:0;background:none;cursor:pointer;
     -webkit-tap-highlight-color:transparent;
   }
@@ -122,8 +130,9 @@
   #phone.dragging .fade{pointer-events:none}   /* не мешать перетаскиванию */
 
   /* ─── пейджер @133,536 · 95×20 ─── */
+  .controls{position:relative;flex:0 0 52px;margin-top:24px}
   #pager{
-    position:absolute;left:133px;top:536px;width:95px;height:20px;border-radius:10px;
+    position:absolute;left:133px;top:16px;width:95px;height:20px;border-radius:10px;
     background:var(--cell-bg);display:flex;align-items:center;justify-content:center;gap:6px;
     touch-action:none;cursor:grab;
     transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;
@@ -136,7 +145,7 @@
 
   /* ─── инструмент сбора @272,528 · 52×52 ─── */
   #collect{
-    position:absolute;left:272px;top:528px;width:52px;height:52px;border-radius:50%;
+    position:absolute;left:272px;top:0;width:52px;height:52px;border-radius:50%;
     background:var(--cell-bg);border:0;padding:0;display:grid;place-items:center;
     font-size:32px;line-height:1;cursor:grab;touch-action:none;
   }
@@ -144,8 +153,8 @@
 
   /* ─── лоток: frame @0,594 · 360×152, items 80 @y24, x40 шаг 92 ─── */
   #tray{
-    position:absolute;left:0;top:594px;width:360px;height:152px;
-    display:flex;gap:12px;padding:24px 40px 48px;
+    flex:0 0 auto;width:360px;
+    display:flex;gap:12px;padding:24px 40px;
     overflow-x:auto;scrollbar-width:none;
   }
   #tray::-webkit-scrollbar{display:none}
@@ -159,7 +168,8 @@
   .seed img{width:72px;height:72px;object-fit:contain;pointer-events:none}
 
   /* ─── home bar ─── */
-  #homebar{position:absolute;left:50%;top:767px;transform:translateX(-50%);width:133px;height:5px;border-radius:100px;background:#fff}
+  #homebar{flex:0 0 34px;position:relative}
+  #homebar::after{content:"";position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:133px;height:5px;border-radius:100px;background:#fff}
 
   /* ─── призрак перетаскивания ─── */
   #ghost{position:fixed;left:0;top:0;width:64px;height:64px;pointer-events:none;z-index:90;display:none}
@@ -186,7 +196,7 @@
 
   /* ─── служебный переключатель: в шапке, в свободной зоне app-bar ─── */
   #dev{
-    position:absolute;left:40px;top:52px;height:28px;z-index:40;
+    position:absolute;left:40px;top:8px;height:28px;z-index:40;
     display:flex;align-items:stretch;border:1px dashed rgba(255,255,255,.28);
     border-radius:100px;overflow:hidden;background:rgba(255,255,255,.04);
   }
@@ -201,8 +211,12 @@
 <body>
 
 <div id="phone">
-  <div id="time">9:41</div>
-  <div id="sysicons">▪▪▪ ⌁ ▰</div>
+  <div class="statusbar">
+    <div id="time">9:41</div>
+    <div id="sysicons">▪▪▪ ⌁ ▰</div>
+  </div>
+
+  <div class="appbar">
   <button id="back" aria-label="Назад">‹</button>
 
   <div id="dev">
@@ -220,16 +234,23 @@
         stroke-dasharray="78.5" stroke-dashoffset="24"/></svg><b>10</b>
     </div>
   </div>
+  </div>
 
-  <div id="title">Генератор</div>
-  <div id="desc">Доступно <span id="free">0</span> ячеек</div>
+  <div class="titlewrap">
+    <div id="title">Генератор</div>
+    <div id="desc">Доступно <span id="free">0</span> ячеек</div>
+  </div>
 
-  <div id="scroller"></div>
-  <button class="fade l" aria-label="Предыдущий блок"></button>
-  <button class="fade r" aria-label="Следующий блок"></button>
+  <div id="stage">
+    <div id="scroller"></div>
+    <button class="fade l" aria-label="Предыдущий блок"></button>
+    <button class="fade r" aria-label="Следующий блок"></button>
+  </div>
 
-  <div id="pager"></div>
-  <button id="collect" title="Сбор: провести по готовым ячейкам">👋</button>
+  <div class="controls">
+    <div id="pager"></div>
+    <button id="collect" title="Сбор: провести по готовым ячейкам">👋</button>
+  </div>
 
   <div id="tray"></div>
   <div id="homebar"></div>
@@ -291,11 +312,21 @@ const cellEls = [];
 
 /* Макет свёрстан в координатах 360×780 и целиком масштабируется под экран:
    на телефоне растягивается во весь экран, на десктопе ужимается. */
+const DESIGN_W = 360;
+const COMPACT_H = 700;   // ниже этого прячем бутафорские статус-бар и home bar
+
 function fit(){
   const vv = window.visualViewport;
   const w = vv ? vv.width  : innerWidth;
   const h = vv ? vv.height : innerHeight;
-  phone.style.transform = `scale(${Math.min(w/360, h/780)})`;
+
+  // ширина всегда ровно 360 единиц макета — размеры ячеек остаются как в Figma
+  const s = w / DESIGN_W;
+  const layoutH = h / s;                     // сколько высоты дал экран, в единицах макета
+
+  phone.classList.toggle('compact', layoutH < COMPACT_H);
+  phone.style.height = layoutH + 'px';
+  phone.style.transform = `scale(${s})`;
 }
 addEventListener('resize', fit);
 addEventListener('orientationchange', fit);
