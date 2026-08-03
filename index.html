@@ -210,18 +210,49 @@
     background:linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent);animation:sh 1.1s infinite}
   @keyframes sh{100%{transform:translateX(100%)}}
 
-  /* ─── служебный переключатель: в шапке, в свободной зоне app-bar ─── */
-  #dev{
+  /* ─── вход в служебные настройки: в шапке, в свободной зоне app-bar ─── */
+  #devbtn{
     position:absolute;left:40px;top:8px;height:28px;z-index:40;
-    display:flex;align-items:stretch;border:1px dashed rgba(255,255,255,.28);
-    border-radius:100px;overflow:hidden;background:rgba(255,255,255,.04);
+    display:flex;align-items:center;gap:6px;padding:0 12px;
+    border:1px dashed rgba(255,255,255,.28);border-radius:100px;
+    background:rgba(255,255,255,.04);color:#8e8e93;
+    font:600 12px/1 inherit;letter-spacing:-.1px;cursor:pointer;
   }
-  #dev button{
-    border:0;background:none;color:#8e8e93;font:600 12px/1 inherit;
-    padding:0 10px;cursor:pointer;letter-spacing:-.1px;
+  #devbtn:hover{color:#c7c7cc}
+  #devbtn b{color:var(--tui-text-action)}
+
+  /* ─── страница настроек прототипа ─── */
+  #settings{
+    position:absolute;inset:0;z-index:100;background:#000;
+    display:flex;flex-direction:column;overflow-y:auto;
   }
-  #dev button.on{background:var(--tui-text-action);color:#fff}
-  #dev button+button{border-left:1px dashed rgba(255,255,255,.28)}
+  #settings[hidden]{display:none}
+  #settings .head{
+    flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
+    padding:16px 16px 8px;
+  }
+  #settings h2{margin:0;font-size:24px;font-weight:700;letter-spacing:.2px}
+  #settings .close{
+    border:0;background:rgba(255,255,255,.1);color:#fff;width:32px;height:32px;
+    border-radius:50%;font-size:17px;line-height:1;cursor:pointer;
+  }
+  #settings .body{padding:8px 16px 24px;display:flex;flex-direction:column;gap:22px}
+  .row .label{font-size:13px;font-weight:600;color:#8e8e93;margin-bottom:8px;letter-spacing:-.08px}
+  .row .hint{font-size:12px;line-height:1.4;color:#636366;margin-top:8px}
+  .seg{display:flex;background:rgba(255,255,255,.1);border-radius:10px;padding:3px;gap:3px}
+  .seg button{
+    flex:1;border:0;background:none;color:#c7c7cc;border-radius:8px;
+    padding:9px 6px;font:600 13px/1.2 inherit;cursor:pointer;letter-spacing:-.08px;
+  }
+  .seg button.on{background:var(--tui-text-action);color:#fff}
+  .danger{
+    width:100%;border:1px solid rgba(255,255,255,.18);background:none;color:#ff453a;
+    border-radius:10px;padding:12px;font:600 14px/1 inherit;cursor:pointer;
+  }
+  #settings .note{
+    font-size:12px;line-height:1.45;color:#636366;
+    border-top:1px solid rgba(255,255,255,.1);padding-top:14px;
+  }
 </style>
 </head>
 <body>
@@ -235,11 +266,7 @@
   <div class="appbar">
   <button id="back" aria-label="Назад">‹</button>
 
-  <div id="dev">
-    <button data-mode="single" title="1 блок · 25 ячеек">1</button>
-    <button data-mode="overflow" title="4 блока · 100 ячеек">4</button>
-    <button id="reset" title="Сброс">⟲</button>
-  </div>
+  <button id="devbtn" title="Настройки прототипа">версия <b id="devver">A</b></button>
 
   <div id="widget">
     <div class="badge"><i class="i-gem"></i><span>500</span></div>
@@ -273,6 +300,60 @@
 
   <div id="tip"></div>
   <div id="skeleton"></div>
+
+  <div id="settings" hidden>
+    <div class="head">
+      <h2>Настройки прототипа</h2>
+      <button class="close" aria-label="Закрыть">✕</button>
+    </div>
+    <div class="body">
+
+      <div class="row">
+        <div class="label">ВЕРСИЯ СБОРА</div>
+        <div class="seg">
+          <button data-set="collect:tool">A · ручкой</button>
+          <button data-set="collect:direct">B · напрямую</button>
+        </div>
+        <div class="hint" id="collectHint"></div>
+      </div>
+
+      <div class="row" id="directRow" hidden>
+        <div class="label">КАК ОТЛИЧАТЬ СБОР ОТ ПРОКРУТКИ</div>
+        <div class="seg">
+          <button data-set="direct:tap">Тап</button>
+          <button data-set="direct:hold">Удержание</button>
+          <button data-set="direct:dir">Направление</button>
+        </div>
+        <div class="hint" id="directHint"></div>
+      </div>
+
+      <div class="row" id="allRow" hidden>
+        <div class="label">КНОПКА «СОБРАТЬ ВСЁ»</div>
+        <div class="seg">
+          <button data-set="all:off">Нет</button>
+          <button data-set="all:on">Есть</button>
+        </div>
+        <div class="hint">Ручка остаётся на экране, но не заметает — одно нажатие собирает всё готовое во всех блоках.</div>
+      </div>
+
+      <div class="row">
+        <div class="label">СКОЛЬКО БЛОКОВ</div>
+        <div class="seg">
+          <button data-mode="single">1 блок · 25</button>
+          <button data-mode="overflow">4 блока · 100</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <button class="danger" id="reset">Очистить все грядки</button>
+      </div>
+
+      <div class="note">
+        Служебный экран для тестов. Переключение применяется сразу —
+        закрой настройки и пробуй, грядки не сбрасываются.
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="ghost"><img alt=""><span></span></div>
@@ -505,9 +586,25 @@ tray.addEventListener('pointerdown', e => {
 });
 
 collectTool.addEventListener('pointerdown', e => {
+  if(cfg.collect === 'direct') return;      // в версии B ручка не заметает
   e.preventDefault();
   startDrag('collect', collectTool, null, e);
 });
+
+collectTool.addEventListener('click', () => {
+  if(cfg.collect === 'direct' && cfg.all === 'on') collectAll();
+});
+
+function collectAll(){
+  let n = 0;
+  state.cells.forEach((c, i) => {
+    if(c.state !== 'ready') return;
+    state.cells[i] = { state:'empty' };
+    paintCell(i);
+    n++;
+  });
+  if(n){ clearSel(); countFree(); save(); }
+}
 
 document.addEventListener('pointermove', e => {
   if(!drag) return;
@@ -627,6 +724,7 @@ function apply(x, y){
 let lastTap = {idx:-1, at:0};
 
 scroller.addEventListener('click', e => {
+  if(swallowClick){ swallowClick = false; return; }   // уже собрали этим же касанием
   const cell = e.target.closest('.cell');
   if(!cell) return;
   const idx = +cell.dataset.idx, now = Date.now();
@@ -776,16 +874,132 @@ function updatePager(){
   $('.fade.r').disabled = active === MODES[state.mode] - 1;
 }
 
-/* ═══════════ СЛУЖЕБНЫЙ ПЕРЕКЛЮЧАТЕЛЬ ═══════════ */
+/* ═══════════ ВЕРСИИ И НАСТРОЙКИ ═══════════
+   A — сбор ручкой: инструмент берут и ведут по готовым ячейкам.
+   B — прямой сбор: ячейку трогают пальцем. Здесь появляется конфликт
+       с горизонтальной прокруткой, поэтому есть три способа развязки. */
 
-$('#dev').addEventListener('click', e => {
+const CFG_KEY = 'generator-proto-cfg';
+const settings = $('#settings');
+
+let cfg = { collect:'tool', direct:'tap', all:'off' };
+try { Object.assign(cfg, JSON.parse(localStorage.getItem(CFG_KEY)) || {}); } catch {}
+const saveCfg = () => localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+
+const HINTS = {
+  collect: {
+    tool:   'Как в макете: берёшь ручку снизу справа и ведёшь по готовым ячейкам.',
+    direct: 'Ручки нет, ячейку трогаешь напрямую. Ниже — чем отличать сбор от прокрутки.'
+  },
+  direct: {
+    tap: 'Опустил и отпустил на месте — собрал. Сдвинул палец — это прокрутка, сбор отменяется. Массового сбора нет.',
+    hold:'Быстрый тап собирает одну. Задержал палец на ячейке — прокрутка блокируется, дальше ведёшь и собираешь пачкой.',
+    dir: 'Первое движение решает: вбок — листаешь, вверх-вниз — собираешь заметанием. Без задержек и режимов.'
+  }
+};
+
+function applyCfg(){
+  const direct = cfg.collect === 'direct';
+  $('#directRow').hidden = !direct;
+  $('#allRow').hidden = !direct;
+  collectTool.hidden = direct && cfg.all === 'off';
+  collectTool.title = direct ? 'Собрать всё готовое' : 'Сбор: провести по готовым ячейкам';
+  $('#devver').textContent = direct ? 'B' : 'A';
+  $('#collectHint').textContent = HINTS.collect[cfg.collect];
+  $('#directHint').textContent = HINTS.direct[cfg.direct];
+
+  settings.querySelectorAll('[data-set]').forEach(b => {
+    const [k, v] = b.dataset.set.split(':');
+    b.classList.toggle('on', cfg[k] === v);
+  });
+  settings.querySelectorAll('[data-mode]').forEach(b =>
+    b.classList.toggle('on', b.dataset.mode === state.mode));
+}
+
+$('#devbtn').addEventListener('click', () => { settings.hidden = false; applyCfg(); });
+settings.querySelector('.close').addEventListener('click', () => { settings.hidden = true; });
+
+settings.addEventListener('click', e => {
   const b = e.target.closest('button');
   if(!b) return;
-  if(b.id === 'reset'){ state = fresh(state.mode); save(); return render(); }
-  if(b.dataset.mode && b.dataset.mode !== state.mode){
-    state = fresh(b.dataset.mode); save(); render();
+
+  if(b.id === 'reset'){ state = fresh(state.mode); save(); render(); settings.hidden = true; return; }
+
+  if(b.dataset.mode){
+    if(b.dataset.mode !== state.mode){ state = fresh(b.dataset.mode); save(); render(); }
+    applyCfg();
+    return;
+  }
+
+  if(b.dataset.set){
+    const [k, v] = b.dataset.set.split(':');
+    cfg[k] = v;
+    saveCfg();
+    applyCfg();
   }
 });
+
+/* ═══════════ ВЕРСИЯ B: ПРЯМОЙ СБОР ═══════════ */
+
+const MOVE_TOL = 10;    // порог, после которого движение считается прокруткой
+const HOLD_MS  = 250;
+
+let dc = null;          // текущее касание сетки
+let swallowClick = false;
+
+scroller.addEventListener('pointerdown', e => {
+  if(cfg.collect !== 'direct' || drag) return;
+  const cell = e.target.closest('.cell');
+  if(!cell) return;
+  dc = { idx:+cell.dataset.idx, x:e.clientX, y:e.clientY, moved:false, sweeping:false, timer:null };
+  if(cfg.direct === 'hold'){
+    dc.timer = setTimeout(() => { if(dc && !dc.moved) startSweep(); }, HOLD_MS);
+  }
+});
+
+/* слушаем на документе: палец при заметании уходит за пределы сетки,
+   и на самой сетке отпускание можно не поймать */
+document.addEventListener('pointermove', e => {
+  if(!dc) return;
+  const dx = e.clientX - dc.x, dy = e.clientY - dc.y;
+
+  if(!dc.moved && Math.hypot(dx, dy) > MOVE_TOL){
+    dc.moved = true;
+    clearTimeout(dc.timer);
+    // «направление»: вертикаль — сбор, горизонталь — отдаём прокрутке
+    if(cfg.direct === 'dir' && Math.abs(dy) > Math.abs(dx)) startSweep();
+  }
+  if(dc.sweeping){ e.preventDefault(); sweepAt(e.clientX, e.clientY); }
+}, {passive:false});
+
+function startSweep(){
+  dc.sweeping = true;
+  scroller.style.overflowX = 'hidden';   // на время заметания прокрутка выключена
+  sweepAt(dc.x, dc.y);
+}
+
+function sweepAt(x, y){
+  const el = document.elementFromPoint(x, y);
+  const cell = el && el.closest ? el.closest('.cell') : null;
+  if(!cell) return;
+  const i = +cell.dataset.idx;
+  if(state.cells[i].state === 'ready'){ collect(i); swallowClick = true; }
+}
+
+function endDirect(){
+  if(!dc) return;
+  clearTimeout(dc.timer);
+  // тап без движения — собираем одну ячейку
+  if(!dc.moved && !dc.sweeping && state.cells[dc.idx].state === 'ready'){
+    collect(dc.idx);
+    swallowClick = true;
+  }
+  scroller.style.overflowX = '';
+  dc = null;
+}
+document.addEventListener('pointerup', endDirect);
+document.addEventListener('pointercancel', endDirect);
+addEventListener('blur', endDirect);
 
 /* ═══════════ СКЕЛЕТОН + СТАРТ ═══════════ */
 
@@ -819,8 +1033,7 @@ function render(){
   skeleton.classList.add('on');
   buildGrid();
   buildTray();
-  document.querySelectorAll('#dev [data-mode]').forEach(b =>
-    b.classList.toggle('on', b.dataset.mode === state.mode));
+  applyCfg();
   scroller.scrollLeft = 0;
   fit();
   setTimeout(() => skeleton.classList.remove('on'), SKELETON_MS);
