@@ -321,9 +321,8 @@
       <div class="row" id="directRow" hidden>
         <div class="label">КАК ОТЛИЧАТЬ СБОР ОТ ПРОКРУТКИ</div>
         <div class="seg">
-          <button data-set="direct:tap">Тап</button>
-          <button data-set="direct:hold">Удержание</button>
           <button data-set="direct:dir">Направление</button>
+          <button data-set="direct:hold">Удержание</button>
         </div>
         <div class="hint" id="directHint"></div>
       </div>
@@ -860,8 +859,9 @@ function updatePager(){
 const CFG_KEY = 'generator-proto-cfg';
 const settings = $('#settings');
 
-let cfg = { collect:'tool', direct:'tap' };
+let cfg = { collect:'tool', direct:'dir' };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem(CFG_KEY)) || {}); } catch {}
+if(cfg.direct !== 'hold') cfg.direct = 'dir';   // вариант «тап» убран: 100 ячеек по одной не натыкать
 const saveCfg = () => localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
 
 const HINTS = {
@@ -870,9 +870,8 @@ const HINTS = {
     direct: 'Ручки нет, ячейку трогаешь напрямую. Ниже — чем отличать сбор от прокрутки.'
   },
   direct: {
-    tap: 'Опустил и отпустил на месте — собрал. Сдвинул палец — это прокрутка, сбор отменяется. Массового сбора нет.',
-    hold:'Быстрый тап собирает одну. Задержал палец на ячейке — прокрутка блокируется, дальше ведёшь и собираешь пачкой.',
-    dir: 'Первое движение решает: вбок — листаешь, вверх-вниз — собираешь заметанием. Без задержек и режимов.'
+    dir: 'Первое движение решает: вбок — листаешь блоки, вверх-вниз — ведёшь и собираешь всё под пальцем. Без задержек и режимов.',
+    hold:'Задержал палец на ячейке — прокрутка блокируется, дальше ведёшь и собираешь пачкой. Быстрый тап собирает одну.'
   }
 };
 
