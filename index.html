@@ -166,6 +166,7 @@
     font-size:32px;line-height:1;cursor:grab;touch-action:none;
   }
   #collect.lifted{opacity:.35}
+  #collect[hidden]{display:none}   /* иначе display:grid выше перебивает [hidden] */
 
   /* ─── лоток: frame @0,594 · 360×152, items 80 @y24, x40 шаг 92 ─── */
   #tray{
@@ -325,15 +326,6 @@
           <button data-set="direct:dir">Направление</button>
         </div>
         <div class="hint" id="directHint"></div>
-      </div>
-
-      <div class="row" id="allRow" hidden>
-        <div class="label">КНОПКА «СОБРАТЬ ВСЁ»</div>
-        <div class="seg">
-          <button data-set="all:off">Нет</button>
-          <button data-set="all:on">Есть</button>
-        </div>
-        <div class="hint">Ручка остаётся на экране, но не заметает — одно нажатие собирает всё готовое во всех блоках.</div>
       </div>
 
       <div class="row">
@@ -591,20 +583,6 @@ collectTool.addEventListener('pointerdown', e => {
   startDrag('collect', collectTool, null, e);
 });
 
-collectTool.addEventListener('click', () => {
-  if(cfg.collect === 'direct' && cfg.all === 'on') collectAll();
-});
-
-function collectAll(){
-  let n = 0;
-  state.cells.forEach((c, i) => {
-    if(c.state !== 'ready') return;
-    state.cells[i] = { state:'empty' };
-    paintCell(i);
-    n++;
-  });
-  if(n){ clearSel(); countFree(); save(); }
-}
 
 document.addEventListener('pointermove', e => {
   if(!drag) return;
@@ -882,7 +860,7 @@ function updatePager(){
 const CFG_KEY = 'generator-proto-cfg';
 const settings = $('#settings');
 
-let cfg = { collect:'tool', direct:'tap', all:'off' };
+let cfg = { collect:'tool', direct:'tap' };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem(CFG_KEY)) || {}); } catch {}
 const saveCfg = () => localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
 
@@ -901,9 +879,7 @@ const HINTS = {
 function applyCfg(){
   const direct = cfg.collect === 'direct';
   $('#directRow').hidden = !direct;
-  $('#allRow').hidden = !direct;
-  collectTool.hidden = direct && cfg.all === 'off';
-  collectTool.title = direct ? 'Собрать всё готовое' : 'Сбор: провести по готовым ячейкам';
+  collectTool.hidden = direct;          // в версии B ручки на экране нет вообще
   $('#devver').textContent = direct ? 'B' : 'A';
   $('#collectHint').textContent = HINTS.collect[cfg.collect];
   $('#directHint').textContent = HINTS.direct[cfg.direct];
