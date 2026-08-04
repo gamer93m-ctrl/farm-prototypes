@@ -212,7 +212,6 @@
 
   /* ─── призрак перетаскивания ─── */
   /* остаётся в потоке, но не виден и не ловит касания */
-  #hapticSwitch{position:fixed;left:0;bottom:0;width:1px;height:1px;opacity:.01;pointer-events:none;z-index:-1;margin:0}
   #ghost{position:fixed;left:0;top:0;width:64px;height:64px;pointer-events:none;z-index:90;display:none}
   #ghost img{width:100%;height:100%;object-fit:contain;display:block}
   #ghost span{display:block;width:100%;height:100%;font-size:44px;line-height:64px;text-align:center}
@@ -349,14 +348,6 @@
         <div class="hint" id="collectHint"></div>
       </div>
 
-      <div class="row">
-        <div class="label">ВИБРООТДАЧА</div>
-        <div class="seg">
-          <button data-set="haptics:on">Есть</button>
-          <button data-set="haptics:off">Нет</button>
-        </div>
-        <div class="hint" id="hapticHint"></div>
-      </div>
 
       <div class="row" id="directRow" hidden>
         <div class="label">КАК ОТЛИЧАТЬ СБОР ОТ ПРОКРУТКИ</div>
@@ -390,9 +381,6 @@
 
 <div id="ghost"><img alt=""><span></span></div>
 
-<!-- Нативный переключатель Safari: его переключение даёт тактильный отклик
-     на iOS. Должен оставаться отрисованным, иначе система его не заметит. -->
-<input type="checkbox" switch id="hapticSwitch" aria-hidden="true" tabindex="-1">
 
 <script>
 'use strict';
@@ -747,7 +735,6 @@ function apply(x, y){
   }
 
   if(idx === selCell) clearSel();   // выбранная обработана — замок снят
-  haptic(drag.kind === 'seed' ? 8 : 14);
   paintCell(idx);
   countFree();
 }
@@ -916,35 +903,11 @@ function updatePager(){
 const CFG_KEY = 'generator-proto-cfg';
 const settings = $('#settings');
 
-let cfg = { collect:'tool', direct:'free', haptics:'on' };
+let cfg = { collect:'tool', direct:'free' };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem(CFG_KEY)) || {}); } catch {}
 // убранные варианты («тап», «направление») переезжают на свободное заметание
 if(!['free','start','hold'].includes(cfg.direct)) cfg.direct = 'free';
 
-/* ═══ Виброотдача ═══
-   Android: работает штатно через navigator.vibrate.
-   iOS: этого API в вебе нет вообще. Обходной путь — нативный переключатель
-   <input type="checkbox" switch> из Safari 17.4: система даёт тактильный
-   отклик на его переключение, и мы дёргаем его скрытно. Это хак: силу и
-   характер отклика не выбрать, на версиях ниже 17.4 он молчит.
-   В нативном приложении всё это делается штатно и богаче. */
-
-const canVibrate = typeof navigator.vibrate === 'function';
-const isIOS = /iP(hone|ad|od)/.test(navigator.platform) ||
-              (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
-const hapticSwitch = $('#hapticSwitch');
-const iosHaptic = !canVibrate && !!hapticSwitch && 'switch' in hapticSwitch;
-
-let lastHaptic = 0;
-function haptic(ms){
-  if(cfg.haptics === 'off') return;
-  const now = Date.now();
-  if(now - lastHaptic < 30) return;      // не частим при массовом заметании
-  lastHaptic = now;
-
-  if(canVibrate){ try { navigator.vibrate(ms); } catch {} return; }
-  if(iosHaptic){ try { hapticSwitch.click(); } catch {} }
-}
 const saveCfg = () => localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
 
 const HINTS = {
@@ -967,11 +930,6 @@ function applyCfg(){
   $('#directRow').hidden = !direct;
   collectTool.hidden = direct || select;   // ручка живёт только в версии A
   $('#devver').textContent = select ? 'C' : direct ? 'B' : 'A';
-  $('#hapticHint').textContent = canVibrate
-    ? 'Короткий отклик при посадке и сборе.'
-    : iosHaptic
-      ? 'На iOS вибрации в вебе нет, пробуем обходной путь через системный переключатель — работает с iOS 17.4. В приложении отклик будет полноценным.'
-      : 'Этот браузер тактильный отклик не поддерживает. В нативном приложении он делается штатно.';
   if(!select) clearPicked();
   $('#collectHint').textContent = HINTS.collect[cfg.collect];
   $('#directHint').textContent = HINTS.direct[cfg.direct];
@@ -1053,7 +1011,7 @@ $('#doCollect').addEventListener('click', () => {
     paintCell(i);
     n++;
   });
-  if(n){ haptic(18); countFree(); save(); }
+  if(n){ countFree(); save(); }
   clearPicked();
 });
 
@@ -1069,7 +1027,7 @@ function seedPicked(typeId){
     paintCell(i);
     n++;
   });
-  if(n){ haptic(12); countFree(); save(); }
+  if(n){ countFree(); save(); }
   clearPicked();
   return n;
 }
@@ -1092,7 +1050,7 @@ scroller.addEventListener('pointerdown', e => {
   if(cfg.collect === 'select'){
     const i = +cell.dataset.idx;
     paint = { add: !picked.has(i) };
-    if(paintCell2(i, paint.add)) haptic(6);
+    paintCell2(i, paint.add);
     renderActionbar();
     lockScroll(true);
     dc = { idx:i, x:e.clientX, y:e.clientY, moved:false, sweeping:true, timer:null };
@@ -1154,11 +1112,11 @@ function sweepAt(x, y){
   const i = +cell.dataset.idx;
 
   if(cfg.collect === 'select'){          // версия C: красим выделение
-    if(paintCell2(i, paint.add)){ haptic(6); renderActionbar(); }
+    if(paintCell2(i, paint.add)) renderActionbar();
     swallowClick = true;
     return;
   }
-  if(state.cells[i].state === 'ready'){ collect(i); haptic(14); swallowClick = true; }
+  if(state.cells[i].state === 'ready'){ collect(i); swallowClick = true; }
 }
 
 function endDirect(){
@@ -1168,7 +1126,6 @@ function endDirect(){
   // тап без движения — собираем одну ячейку
   if(!dc.moved && !dc.sweeping && state.cells[dc.idx].state === 'ready'){
     collect(dc.idx);
-    haptic(14);
     swallowClick = true;
   }
   lockScroll(false);
