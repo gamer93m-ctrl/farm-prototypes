@@ -211,6 +211,8 @@
   #homebar::after{content:"";position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:133px;height:5px;border-radius:100px;background:#fff}
 
   /* ─── призрак перетаскивания ─── */
+  /* остаётся в потоке, но не виден и не ловит касания */
+  #hapticSwitch{position:fixed;left:0;bottom:0;width:1px;height:1px;opacity:.01;pointer-events:none;z-index:-1;margin:0}
   #ghost{position:fixed;left:0;top:0;width:64px;height:64px;pointer-events:none;z-index:90;display:none}
   #ghost img{width:100%;height:100%;object-fit:contain;display:block}
   #ghost span{display:block;width:100%;height:100%;font-size:44px;line-height:64px;text-align:center}
@@ -387,6 +389,10 @@
 </div>
 
 <div id="ghost"><img alt=""><span></span></div>
+
+<!-- Нативный переключатель Safari: его переключение даёт тактильный отклик
+     на iOS. Должен оставаться отрисованным, иначе система его не заметит. -->
+<input type="checkbox" switch id="hapticSwitch" aria-hidden="true" tabindex="-1">
 
 <script>
 'use strict';
@@ -915,13 +921,29 @@ try { Object.assign(cfg, JSON.parse(localStorage.getItem(CFG_KEY)) || {}); } cat
 // убранные варианты («тап», «направление») переезжают на свободное заметание
 if(!['free','start','hold'].includes(cfg.direct)) cfg.direct = 'free';
 
-/* Виброотдача. navigator.vibrate есть в Android Chrome; iOS Safari его не
-   поддерживает, там на вебе вибрации не будет — в нативном приложении она
-   делается штатно. Вызов безопасен везде: нет поддержки — тихо ничего. */
+/* ═══ Виброотдача ═══
+   Android: работает штатно через navigator.vibrate.
+   iOS: этого API в вебе нет вообще. Обходной путь — нативный переключатель
+   <input type="checkbox" switch> из Safari 17.4: система даёт тактильный
+   отклик на его переключение, и мы дёргаем его скрытно. Это хак: силу и
+   характер отклика не выбрать, на версиях ниже 17.4 он молчит.
+   В нативном приложении всё это делается штатно и богаче. */
+
 const canVibrate = typeof navigator.vibrate === 'function';
+const isIOS = /iP(hone|ad|od)/.test(navigator.platform) ||
+              (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
+const hapticSwitch = $('#hapticSwitch');
+const iosHaptic = !canVibrate && !!hapticSwitch && 'switch' in hapticSwitch;
+
+let lastHaptic = 0;
 function haptic(ms){
-  if(cfg.haptics === 'off' || !canVibrate) return;
-  try { navigator.vibrate(ms); } catch {}
+  if(cfg.haptics === 'off') return;
+  const now = Date.now();
+  if(now - lastHaptic < 30) return;      // не частим при массовом заметании
+  lastHaptic = now;
+
+  if(canVibrate){ try { navigator.vibrate(ms); } catch {} return; }
+  if(iosHaptic){ try { hapticSwitch.click(); } catch {} }
 }
 const saveCfg = () => localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
 
@@ -947,7 +969,9 @@ function applyCfg(){
   $('#devver').textContent = select ? 'C' : direct ? 'B' : 'A';
   $('#hapticHint').textContent = canVibrate
     ? 'Короткий отклик при посадке и сборе.'
-    : 'Этот браузер вибрацию не поддерживает — на iOS её в вебе нет. В нативном приложении делается штатно.';
+    : iosHaptic
+      ? 'На iOS вибрации в вебе нет, пробуем обходной путь через системный переключатель — работает с iOS 17.4. В приложении отклик будет полноценным.'
+      : 'Этот браузер тактильный отклик не поддерживает. В нативном приложении он делается штатно.';
   if(!select) clearPicked();
   $('#collectHint').textContent = HINTS.collect[cfg.collect];
   $('#directHint').textContent = HINTS.direct[cfg.direct];
