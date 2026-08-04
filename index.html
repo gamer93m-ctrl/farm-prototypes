@@ -110,10 +110,32 @@
     position:relative;overflow:hidden;
     display:grid;place-items:center;
   }
-  /* предварительно выбранная ячейка — как resources23 в макете */
+  /* выбранная ячейка — как resources23 в макете */
   .cell.sel::before{
     content:"";position:absolute;inset:0;background:rgba(66,139,249,.2);z-index:2;
   }
+  /* в версии C выбор множественный, поэтому ставим галочку как в фотоплёнке */
+  #phone[data-ver="select"] .cell.sel::after{
+    content:"✓";position:absolute;right:3px;top:3px;width:16px;height:16px;
+    border-radius:50%;background:var(--tui-text-action);color:#fff;
+    font-size:10px;font-weight:700;line-height:16px;text-align:center;z-index:3;
+  }
+
+  /* ─── панель действий над выделением ─── */
+  #actionbar{
+    flex:0 0 auto;display:flex;align-items:center;gap:8px;
+    margin:0 16px;padding:8px 8px 8px 14px;
+    background:rgba(255,255,255,.1);border-radius:14px;
+  }
+  #actionbar[hidden]{display:none}
+  #actionbar .n{flex:1;font-size:13px;font-weight:600;letter-spacing:-.08px}
+  #actionbar .n small{display:block;font-weight:400;color:#8e8e93;font-size:11px;margin-top:2px}
+  #actionbar button{
+    border:0;border-radius:9px;padding:9px 12px;font:600 13px/1 inherit;cursor:pointer;
+  }
+  #actionbar .go{background:var(--tui-text-action);color:#fff}
+  #actionbar .go[disabled]{background:rgba(255,255,255,.12);color:#636366;cursor:default}
+  #actionbar .clr{background:none;color:#8e8e93;padding:9px 4px}
   /* доля от ячейки, а не фикс — ячейка меняет размер под экран */
   .cell img{width:71%;height:71%;object-fit:contain;pointer-events:none;position:relative}
   .cell.growing img{opacity:.4}
@@ -296,6 +318,12 @@
     <button id="collect" title="Сбор: провести по готовым ячейкам">👋</button>
   </div>
 
+  <div id="actionbar" hidden>
+    <div class="n"><span id="selN">Выбрано 0</span><small id="selHint"></small></div>
+    <button class="go" id="doCollect">Собрать</button>
+    <button class="clr" id="doClear">Снять</button>
+  </div>
+
   <div id="tray"></div>
   <div id="homebar"></div>
 
@@ -314,8 +342,18 @@
         <div class="seg">
           <button data-set="collect:tool">A · ручкой</button>
           <button data-set="collect:direct">B · напрямую</button>
+          <button data-set="collect:select">C · выделением</button>
         </div>
         <div class="hint" id="collectHint"></div>
+      </div>
+
+      <div class="row">
+        <div class="label">ВИБРООТДАЧА</div>
+        <div class="seg">
+          <button data-set="haptics:on">Есть</button>
+          <button data-set="haptics:off">Нет</button>
+        </div>
+        <div class="hint" id="hapticHint"></div>
       </div>
 
       <div class="row" id="directRow" hidden>
@@ -574,7 +612,15 @@ tray.addEventListener('pointerdown', e => {
   e.preventDefault();
   selectedType = seed.dataset.type;
   tray.querySelectorAll('.seed').forEach(s => s.classList.toggle('sel', s === seed));
+  // версия C с выделением: ресурс не тащат, по нему жмут — засеется всё выбранное
+  if(cfg.collect === 'select' && picked.size) return;
   startDrag('seed', seed, selectedType, e);
+});
+
+tray.addEventListener('click', e => {
+  const seed = e.target.closest('.seed');
+  if(!seed || cfg.collect !== 'select' || !picked.size) return;
+  seedPicked(seed.dataset.type);
 });
 
 collectTool.addEventListener('pointerdown', e => {
@@ -695,6 +741,7 @@ function apply(x, y){
   }
 
   if(idx === selCell) clearSel();   // выбранная обработана — замок снят
+  haptic(drag.kind === 'seed' ? 8 : 14);
   paintCell(idx);
   countFree();
 }
@@ -704,7 +751,8 @@ function apply(x, y){
 let lastTap = {idx:-1, at:0};
 
 scroller.addEventListener('click', e => {
-  if(swallowClick){ swallowClick = false; return; }   // уже собрали этим же касанием
+  if(swallowClick){ swallowClick = false; return; }   // уже обработали этим же касанием
+  if(cfg.collect === 'select') return;                // в версии C выделением занимаются указатели
   const cell = e.target.closest('.cell');
   if(!cell) return;
   const idx = +cell.dataset.idx, now = Date.now();
@@ -862,16 +910,26 @@ function updatePager(){
 const CFG_KEY = 'generator-proto-cfg';
 const settings = $('#settings');
 
-let cfg = { collect:'tool', direct:'free' };
+let cfg = { collect:'tool', direct:'free', haptics:'on' };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem(CFG_KEY)) || {}); } catch {}
 // убранные варианты («тап», «направление») переезжают на свободное заметание
 if(!['free','start','hold'].includes(cfg.direct)) cfg.direct = 'free';
+
+/* Виброотдача. navigator.vibrate есть в Android Chrome; iOS Safari его не
+   поддерживает, там на вебе вибрации не будет — в нативном приложении она
+   делается штатно. Вызов безопасен везде: нет поддержки — тихо ничего. */
+const canVibrate = typeof navigator.vibrate === 'function';
+function haptic(ms){
+  if(cfg.haptics === 'off' || !canVibrate) return;
+  try { navigator.vibrate(ms); } catch {}
+}
 const saveCfg = () => localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
 
 const HINTS = {
   collect: {
     tool:   'Как в макете: берёшь ручку снизу справа и ведёшь по готовым ячейкам.',
-    direct: 'Ручки нет, ячейку трогаешь напрямую. Ниже — чем отличать сбор от прокрутки.'
+    direct: 'Ручки нет, ячейку трогаешь напрямую. Ниже — чем отличать сбор от прокрутки.',
+    select: 'Как выбор фото в айфоне: отмечаешь ячейки — тапом или проводя пальцем, — а потом одним действием собираешь или засеиваешь всё выделенное. Выделение живёт между блоками.'
   },
   direct: {
     free: 'Ведёшь пальцем по сетке — собирается всё готовое под ним. Свайп по сетке больше не листает: блоки переключаются краями экрана и пейджером.',
@@ -882,9 +940,15 @@ const HINTS = {
 
 function applyCfg(){
   const direct = cfg.collect === 'direct';
+  const select = cfg.collect === 'select';
+  phone.dataset.ver = cfg.collect;
   $('#directRow').hidden = !direct;
-  collectTool.hidden = direct;          // в версии B ручки на экране нет вообще
-  $('#devver').textContent = direct ? 'B' : 'A';
+  collectTool.hidden = direct || select;   // ручка живёт только в версии A
+  $('#devver').textContent = select ? 'C' : direct ? 'B' : 'A';
+  $('#hapticHint').textContent = canVibrate
+    ? 'Короткий отклик при посадке и сборе.'
+    : 'Этот браузер вибрацию не поддерживает — на iOS её в вебе нет. В нативном приложении делается штатно.';
+  if(!select) clearPicked();
   $('#collectHint').textContent = HINTS.collect[cfg.collect];
   $('#directHint').textContent = HINTS.direct[cfg.direct];
 
@@ -919,6 +983,73 @@ settings.addEventListener('click', e => {
   }
 });
 
+/* ═══════════ ВЕРСИЯ C: ВЫДЕЛЕНИЕ, КАК В ФОТОПЛЁНКЕ ═══════════
+   Выбор и действие разведены во времени: сперва отмечаешь ячейки
+   тапом или проводя пальцем, потом применяешь действие ко всем сразу.
+   Выделение переживает переключение блоков.                        */
+
+const picked = new Set();
+const actionbar = $('#actionbar');
+let paint = null;   // { add: true|false } — красим выделение или снимаем
+
+function paintCell2(idx, add){
+  if(add === picked.has(idx)) return false;
+  add ? picked.add(idx) : picked.delete(idx);
+  cellEls[idx]?.classList.toggle('sel', add);
+  return true;
+}
+
+function clearPicked(){
+  picked.forEach(i => cellEls[i]?.classList.remove('sel'));
+  picked.clear();
+  renderActionbar();
+}
+
+function renderActionbar(){
+  if(cfg.collect !== 'select' || picked.size === 0){ actionbar.hidden = true; return; }
+  actionbar.hidden = false;
+  const arr = [...picked];
+  const ready = arr.filter(i => state.cells[i].state === 'ready').length;
+  const empty = arr.filter(i => state.cells[i].state === 'empty').length;
+  $('#selN').textContent = `Выбрано ${picked.size}`;
+  $('#selHint').textContent = ready || empty
+    ? [ready && `готовых ${ready}`, empty && `пустых ${empty}`].filter(Boolean).join(' · ')
+    : 'все ячейки заняты';
+  const btn = $('#doCollect');
+  btn.disabled = ready === 0;
+  btn.textContent = ready ? `Собрать ${ready}` : 'Собрать';
+}
+
+/* сбор всего выделенного */
+$('#doCollect').addEventListener('click', () => {
+  let n = 0;
+  picked.forEach(i => {
+    if(state.cells[i].state !== 'ready') return;
+    state.cells[i] = { state:'empty' };
+    paintCell(i);
+    n++;
+  });
+  if(n){ haptic(18); countFree(); save(); }
+  clearPicked();
+});
+
+$('#doClear').addEventListener('click', clearPicked);
+
+/* посев всего выделенного: тап по ресурсу в лотке */
+function seedPicked(typeId){
+  const t = byId(typeId);
+  let n = 0;
+  picked.forEach(i => {
+    if(state.cells[i].state !== 'empty') return;
+    state.cells[i] = { state:'growing', typeId, endsAt: Date.now() + t.growMs };
+    paintCell(i);
+    n++;
+  });
+  if(n){ haptic(12); countFree(); save(); }
+  clearPicked();
+  return n;
+}
+
 /* ═══════════ ВЕРСИЯ B: ПРЯМОЙ СБОР ═══════════ */
 
 const MOVE_TOL = 10;    // порог, после которого движение считается прокруткой
@@ -928,9 +1059,23 @@ let dc = null;          // текущее касание сетки
 let swallowClick = false;
 
 scroller.addEventListener('pointerdown', e => {
-  if(cfg.collect !== 'direct' || drag) return;
+  if(drag) return;
   const cell = e.target.closest('.cell');
   if(!cell) return;
+
+  // версия C: начинаем красить выделение — добавляем или снимаем,
+  // как в фотоплёнке, направление задаёт первая тронутая ячейка
+  if(cfg.collect === 'select'){
+    const i = +cell.dataset.idx;
+    paint = { add: !picked.has(i) };
+    if(paintCell2(i, paint.add)) haptic(6);
+    renderActionbar();
+    lockScroll(true);
+    dc = { idx:i, x:e.clientX, y:e.clientY, moved:false, sweeping:true, timer:null };
+    return;
+  }
+
+  if(cfg.collect !== 'direct') return;
   const idx = +cell.dataset.idx;
   dc = { idx, x:e.clientX, y:e.clientY, moved:false, sweeping:false, timer:null };
 
@@ -983,15 +1128,23 @@ function sweepAt(x, y){
   const cell = el && el.closest ? el.closest('.cell') : null;
   if(!cell) return;
   const i = +cell.dataset.idx;
-  if(state.cells[i].state === 'ready'){ collect(i); swallowClick = true; }
+
+  if(cfg.collect === 'select'){          // версия C: красим выделение
+    if(paintCell2(i, paint.add)){ haptic(6); renderActionbar(); }
+    swallowClick = true;
+    return;
+  }
+  if(state.cells[i].state === 'ready'){ collect(i); haptic(14); swallowClick = true; }
 }
 
 function endDirect(){
   if(!dc) return;
   clearTimeout(dc.timer);
+  paint = null;
   // тап без движения — собираем одну ячейку
   if(!dc.moved && !dc.sweeping && state.cells[dc.idx].state === 'ready'){
     collect(dc.idx);
+    haptic(14);
     swallowClick = true;
   }
   lockScroll(false);
@@ -1028,6 +1181,7 @@ function buildSkeleton(){
 function render(){
   hideTip();
   selCell = null;
+  picked.clear();               // сетка пересобирается — старые ссылки на ячейки не годятся
   anchorBlock = 0;
   stopEdgeScroll();
   buildSkeleton();
@@ -1035,6 +1189,7 @@ function render(){
   buildGrid();
   buildTray();
   applyCfg();
+  renderActionbar();
   scroller.scrollLeft = 0;
   fit();
   setTimeout(() => skeleton.classList.remove('on'), SKELETON_MS);
