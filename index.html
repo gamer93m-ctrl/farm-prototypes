@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Прототипы фермы</title>
+<style>
+  :root{color-scheme:dark}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:#000;color:#fff;
+    font:400 17px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+    padding:44px 20px 40px;display:flex;flex-direction:column;gap:28px}
+  h1{margin:0;font-size:30px;font-weight:700;letter-spacing:.36px}
+  p.lead{margin:0;color:#8e8e93;font-size:15px}
+  ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+  a{display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;
+    background:rgba(255,255,255,.1);border-radius:14px;padding:16px 18px}
+  a:active{background:rgba(255,255,255,.16)}
+  .ico{font-size:26px;line-height:1;flex:0 0 auto}
+  .t{flex:1;min-width:0}
+  .t b{display:block;font-size:17px;font-weight:600}
+  .t small{display:block;color:#8e8e93;font-size:13px;margin-top:3px}
+  .chev{color:#48484a;font-size:22px;line-height:1}
+  .soon{opacity:.45}
+  footer{color:#48484a;font-size:12px;line-height:1.5}
+</style>
+</head>
+<body>
+  <div>
+    <h1>Прототипы фермы</h1>
+    <p class="lead">Кликабельные версии для тестов. Открывать с телефона.</p>
+  </div>
+
+  <ul>
+    <li><a href="generator/">
+      <span class="ico">🌱</span>
+      <span class="t"><b>Генератор</b><small>Грядки: посев, сбор, три версии сбора</small></span>
+      <span class="chev">›</span>
+    </a></li>
+
+    <li><a href="map/">
+      <span class="ico">🗺</span>
+      <span class="t"><b>Карта</b><small>Перемещение, площадки, стройка зданий</small></span>
+      <span class="chev">›</span>
+    </a></li>
+
+    <li><a class="soon" href="onboarding/">
+      <span class="ico">👋</span>
+      <span class="t"><b>Онбординг</b><small>В работе</small></span>
+      <span class="chev">›</span>
+    </a></li>
+  </ul>
+
+  <footer>Каждый прототип открывается по своей ссылке — можно давать по отдельности.</footer>
+</body>
+</html>
