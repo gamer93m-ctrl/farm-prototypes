@@ -10,10 +10,12 @@
      storeKey, ключ хранилища — свой у каждого прототипа
      version,  'tool' | 'direct' | 'select'
      mode,     'single' | 'overflow'
+     cells,    сколько ячеек в блоке (по умолчанию 25 — сетка 5×5)
      chrome    false — спрятать служебную кнопку версий
+     back      false — спрятать «‹»: у хоста своя
    }) → API
 
-   API: .stats() .on('change',cb) .setVersion() .setMode() .reset()
+   API: .stats() .cells() .on('change',cb) .setVersion() .setMode() .reset()
         .setCells() .highlight(idx) .el
    ═══════════════════════════════════════════════════════════════ */
 
@@ -148,6 +150,8 @@ const RESOURCE_TYPES = [
 ];
 
 const CELLS_PER_BLOCK = opts.cells || 25;
+const GRID_COLS = Math.min(5, CELLS_PER_BLOCK);
+const GRID_ROWS = Math.ceil(CELLS_PER_BLOCK / GRID_COLS);
 const MODES = { single:1, overflow:4 };
 const SKELETON_MS = 600;
 const DOUBLE_TAP_MS = 300;
@@ -218,20 +222,25 @@ function fit(){
 }
 
 /* Ячейка подгоняется под то, что осталось между шапкой и лотком.
-   Сетка всегда квадратная 5×5 и целиком помещается — без обрезки и без
-   упирания в подзаголовок. Поля --stage-pad уже вычтены самим stage. */
+   Сетка целиком помещается — без обрезки и без упирания в подзаголовок.
+   Рядов не всегда пять: онбординг берёт всего 5 ячеек, и высоту блока
+   считаем по факту, иначе одинокий ряд висел бы посреди пустоты.
+   Поля --stage-pad уже вычтены самим stage. */
 function sizeGrid(){
   const avail = stage.clientHeight;          // padding уже учтён в clientHeight
   const pad = parseFloat(getComputedStyle(stage).paddingTop) * 2;
   const usable = avail - pad;
 
   const gap = 2;
-  let cell = Math.floor((usable - gap * 4) / 5);
+  let cell = Math.floor((usable - gap * (GRID_ROWS - 1)) / GRID_ROWS);
   cell = Math.max(CELL_MIN, Math.min(CELL_MAX, cell));
 
-  const blockW = cell * 5 + gap * 4;
+  const blockW = cell * GRID_COLS + gap * (GRID_COLS - 1);
+  const blockH = cell * GRID_ROWS + gap * (GRID_ROWS - 1);
+  root.style.setProperty('--grid-cols', GRID_COLS);
   root.style.setProperty('--cell-size', cell + 'px');
   root.style.setProperty('--block-w', blockW + 'px');
+  root.style.setProperty('--block-h', blockH + 'px');
   root.style.setProperty('--grid-left', Math.round((DESIGN_W - blockW) / 2) + 'px');
 }
 addEventListener('resize', fit);
@@ -904,10 +913,14 @@ function buildSkeleton(){
   };
   add('position:absolute;left:16px;top:96px;width:200px;height:34px;border-radius:8px');
   add('position:absolute;left:16px;top:148px;width:140px;height:18px;border-radius:5px');
-  const g = add('position:absolute;left:36px;top:216px;width:288px;height:288px;background:none');
-  g.style.cssText += ';display:grid;grid-template-columns:repeat(5,56px);grid-auto-rows:56px;gap:2px';
+  // скелетон повторяет реальную сетку: у онбординга ячеек меньше,
+  // и квадрат 5×5 схлопывался бы в один ряд прямо на глазах
+  const g = add('position:absolute;left:var(--grid-left);top:50%;transform:translateY(-50%);' +
+                'width:var(--block-w);height:var(--block-h);background:none');
+  g.style.cssText += ';display:grid;grid-template-columns:repeat(var(--grid-cols,5),var(--cell-size));' +
+                     'grid-auto-rows:var(--cell-size);gap:2px';
   g.className = '';
-  for(let i=0;i<25;i++){
+  for(let i=0;i<CELLS_PER_BLOCK;i++){
     const c = document.createElement('div');
     c.className='sk'; c.style.animationDelay=(i*16)+'ms';
     g.appendChild(c);
@@ -937,6 +950,7 @@ function render(){
   const api = {
     el: host,
     stats,
+    cells(){ return state.cells.map(c => ({ ...c })); },
     on(name, cb){ (listeners[name] ||= []).push(cb); return api; },
     setVersion(v){ cfg.collect = v; saveCfg(); applyCfg(); return api; },
     setMode(m){ if(m !== state.mode){ state = fresh(m); save(); render(); } return api; },
@@ -957,6 +971,9 @@ function render(){
   if(opts.version){ cfg.collect = opts.version; saveCfg(); }
   if(opts.mode && opts.mode !== state.mode) state = fresh(opts.mode);
   if(opts.chrome === false) $('#devbtn').style.display = 'none';
+  // встраиваемому генератору своя «‹» не нужна: у хоста она уже есть,
+  // и две стрелки наезжали друг на друга в углу
+  if(opts.back === false) $('#back').style.display = 'none';
   if(opts.dim) $('#phone').classList.add('dim');
 
   render();

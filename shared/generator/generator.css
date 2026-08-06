@@ -8,6 +8,7 @@
     --cell-size:56px;
     --cell-gap:2px;
     --block-w:288px;                        /* 5×56 + 4×2 */
+    --block-h:288px;                        /* столько же, но рядов бывает меньше пяти */
     --block-gap:20px;
     --grid-left:36px;
     --stage-pad:16px;
@@ -84,7 +85,7 @@
     min-height:0;padding:var(--stage-pad) 0;
   }
   #scroller{
-    width:100%;height:var(--block-w);
+    width:100%;height:var(--block-h);
     /* ряды прижимались к верху, когда ячеек меньше пяти рядов —
        центрируем, чтобы сетка стояла посередине экрана */
     display:flex;align-items:center;gap:var(--block-gap);padding:0 var(--grid-left);
@@ -97,7 +98,7 @@
   .block{
     /* якорная позиция: блок всегда встаёт по центру экрана */
     flex:0 0 var(--block-w);scroll-snap-align:center;
-    display:grid;grid-template-columns:repeat(5,var(--cell-size));
+    display:grid;grid-template-columns:repeat(var(--grid-cols,5),var(--cell-size));
     grid-auto-rows:var(--cell-size);gap:var(--cell-gap);
   }
   .cell{

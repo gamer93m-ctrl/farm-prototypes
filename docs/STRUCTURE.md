@@ -24,10 +24,13 @@ const gen = createGenerator(document.getElementById('app'), {
   storeKey: 'onboarding',   // своё хранилище, чтобы не делить грядки
   version: 'select',        // A · tool | B · direct | C · select
   mode: 'single',
-  chrome: false             // спрятать служебную кнопку версий
+  cells: 5,                 // меньше 25 — сетка сама станет в один ряд
+  chrome: false,            // спрятать служебную кнопку версий
+  back: false               // спрятать «‹»: у хоста своя
 });
 
 gen.on('change', s => console.log(s.empty, s.growing, s.ready));
 gen.highlight(7);           // подсветить ячейку для подсказки
+gen.cells();                // копия грядок: состояния и endsAt
 gen.setCells([{ index: 0, state: 'ready', typeId: 'strawberry', endsAt: 0 }]);
 ```
