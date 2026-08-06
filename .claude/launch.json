@@ -1,0 +1,15 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "farm",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-I",
+        "-c",
+        "import functools, http.server, socketserver; H = functools.partial(http.server.SimpleHTTPRequestHandler, directory='/Users/alecsandrcheshev/Desktop/farm-prototypes'); socketserver.TCPServer.allow_reuse_address = True; socketserver.TCPServer(('', 8765), H).serve_forever()"
+      ],
+      "port": 8765
+    }
+  ]
+}
