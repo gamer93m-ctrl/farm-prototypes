@@ -278,8 +278,8 @@
     font:700 13px/24px inherit;text-align:center;font-style:normal}
 
   /* заказчики */
-  #orders .clients{display:flex;gap:12px;margin-top:20px}
-  #orders .client{position:relative;width:84px;height:84px;border-radius:50%;padding:0;
+  #orders .clients{display:flex;gap:12px;margin-top:18px}
+  #orders .client{position:relative;width:76px;height:76px;border-radius:50%;padding:0;
     border:3px solid transparent;background:#1c1c1e;overflow:visible}
   #orders .client.on{border-color:#ffd60a}
   #orders .client img{width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:50% 12%;
@@ -288,18 +288,20 @@
     background:#30d158;color:#fff;font:700 14px/26px inherit;text-align:center}
 
   /* карточка заказа */
-  #orders .card{position:relative;margin-top:14px;background:#1c1c1e;border-radius:22px;
-    padding:18px 16px 16px;display:flex;flex-direction:column;flex:1;min-height:0}
+  #orders .card{position:relative;margin-top:12px;background:#1c1c1e;border-radius:22px;
+    padding:16px 16px 14px;display:flex;flex-direction:column;flex:1 1 auto;min-height:0;
+    max-height:430px}
   #orders .card::before{content:"";position:absolute;left:38px;top:-8px;width:18px;height:18px;
     background:#1c1c1e;transform:rotate(45deg);border-radius:4px}
   #orders .chead{position:relative;text-align:center;font-size:19px;font-weight:700}
   #orders .reroll{position:absolute;right:0;top:-4px;width:38px;height:38px;border-radius:50%;
     border:0;background:#2c2c2e;color:#0a84ff;font-size:19px}
-  #orders .need{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:16px;
-    font-size:15px;font-weight:600}
-  #orders .slot{position:relative;width:78px;height:78px;border-radius:16px;background:#2c2c2e;
-    display:grid;place-items:center}
-  #orders .slot img{width:56px;height:56px;object-fit:contain}
+  #orders .need{display:flex;justify-content:center;margin-top:14px}
+  /* количество живёт внутри плитки, а не подписью под ней */
+  #orders .slot{position:relative;width:82px;height:92px;border-radius:16px;background:#2c2c2e;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding-bottom:4px}
+  #orders .slot img{width:52px;height:52px;object-fit:contain}
+  #orders .slot b{font-size:14px;font-weight:700}
   #orders .slot .ok{position:absolute;right:-6px;top:-6px;width:26px;height:26px;border-radius:50%;
     background:#30d158;color:#fff;font:700 14px/26px inherit;text-align:center}
   #orders .rewtitle{margin-top:auto;display:flex;align-items:center;gap:12px;
@@ -507,8 +509,7 @@
     <div class="card">
       <div class="chead">Детали<button class="reroll" aria-label="Другой заказ">⟳</button></div>
       <div class="need">
-        <div class="slot"><img alt=""><span class="ok">✓</span></div>
-        <b>5/1</b>
+        <div class="slot"><img alt=""><span class="ok">✓</span><b>5/1</b></div>
       </div>
       <div class="rewtitle"><span></span>Награда за выполнение<span></span></div>
       <div class="rewards">
