@@ -591,7 +591,18 @@ function renderPlacing(){
   }
   ghostEl.style.left = placing.x + 'px';
   ghostEl.style.top  = placing.y + 'px';
-  ghostEl.querySelector('.art').innerHTML =
+  // размеры те же, что у готового здания: без них у призрака нулевая
+  // ширина картинки — на карте оставался один зелёный ромб
+  const f = fitOf(item.art);
+  // метку берём с запасом: ровно по основанию она целиком прячется
+  // под каменной площадкой здания и её не видно
+  const pad = ghostEl.querySelector('.pad');
+  pad.style.width  = (f.t*TILE_W + 34).toFixed(0) + 'px';
+  pad.style.height = (f.t*TILE_H + 18).toFixed(0) + 'px';
+  const art = ghostEl.querySelector('.art');
+  art.style.width  = f.w + 'px';
+  art.style.bottom = -f.off + 'px';
+  art.innerHTML =
     `<img src="${item.art}" alt="" style="transform:scaleX(${placing.flip ? -1 : 1})">`;
 
   dock.innerHTML =
