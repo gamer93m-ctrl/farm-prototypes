@@ -18,8 +18,12 @@
 
   /* дед стоит на карте и хочет кофе */
   #oldman{position:absolute;left:470px;top:660px;transform:translate(-50%,-50%);width:130px;
-    pointer-events:none;display:none}
-  #oldman.on{display:block}
+    pointer-events:none;display:block;visibility:hidden;opacity:0}
+  /* дед приходит, а не возникает: подрастает снизу */
+  #oldman.on{visibility:visible;animation:oldmanin .55s var(--ease) forwards}
+  @keyframes oldmanin{
+    from{opacity:0;transform:translate(-50%,-38%) scale(.86)}
+    to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
   #oldman img{width:100%;display:block;filter:drop-shadow(0 8px 16px rgba(0,0,0,.45))}
   #oldman .want{position:absolute;left:50%;top:-64px;transform:translateX(-50%);
     width:74px;height:74px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:36px}
@@ -37,6 +41,11 @@
     background:rgba(40,150,80,.5)}
   .art{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);pointer-events:none}
   .art img{display:block;width:150px;height:auto}
+
+  /* только что поставленное здание встаёт с отскоком */
+  .plot.pop .art{animation:plotpop .5s cubic-bezier(.34,1.5,.64,1) both}
+  @keyframes plotpop{from{transform:translateX(-50%) translateY(-14px) scale(.86);opacity:0}
+                     to{transform:translateX(-50%);opacity:1}}
 
   /* метка видна только у здания, которое сейчас несут */
   .plot.ghost .pad{opacity:1;animation:padpulse 1.3s ease-in-out infinite}
@@ -72,15 +81,32 @@
   #reset{pointer-events:auto}
 
   /* ─── нижняя кнопка ─── */
-  #dock{position:fixed;left:16px;right:16px;bottom:24px;z-index:20;display:flex;gap:10px}
+  #dock{position:fixed;left:16px;right:16px;bottom:24px;z-index:20;display:flex;gap:10px;
+    transition:opacity .22s ease, transform .3s var(--ease)}
+  /* пока говорят — уезжает вниз, а не пропадает рывком */
+  #dock.hide{opacity:0;transform:translateY(90px);pointer-events:none}
   .primary{flex:1;background:#ffd60a;color:#000;border:0;border-radius:14px;padding:16px;
     font:600 16px/1 inherit;display:flex;align-items:center;justify-content:center;gap:8px}
   .square{width:56px;background:#ffd60a;color:#000;border:0;border-radius:14px;font-size:20px}
 
+  /* Экраны не появляются рывком: display переключался мгновенно, и каждый
+     переход читался как подмена картинки. Держим их в потоке, а показываем
+     через visibility + opacity, чтобы можно было анимировать. */
+  /* имя не .fade — так называются краевые зоны внутри генератора.
+     Скрытое состояние держим на самом классе: если задать его на #id,
+     он перебьёт .veil.on по специфичности и экран не откроется.
+     Откуда именно выезжает конкретный экран — задаёт переменная. */
+  :root{--ease:cubic-bezier(.22,1,.36,1)}
+  .veil{--shift:translateY(18px);
+    visibility:hidden;opacity:0;transform:var(--shift);
+    transition:opacity .26s ease, transform .34s var(--ease), visibility 0s linear .34s}
+  .veil.on{visibility:visible;opacity:1;transform:none;
+    transition:opacity .24s ease, transform .34s var(--ease), visibility 0s}
+
   /* ─── каталог построек: два экрана, как в макете ─── */
-  #sheet{position:fixed;left:0;top:0;width:100%;height:100%;z-index:40;background:#000;
-    display:none;flex-direction:column;overflow:hidden}
-  #sheet.on{display:flex}
+  #sheet{--shift:translateY(26px);
+    position:fixed;left:0;top:0;width:100%;height:100%;z-index:40;background:#000;
+    display:flex;flex-direction:column;overflow:hidden}
   .sheetTop{position:relative;flex:0 0 auto;padding:44px 16px 0}
   .sheetTop .row{display:flex;align-items:center;gap:8px}
   .sheetTop .back{border:0;background:none;color:#0a84ff;font:300 34px/1 inherit;
@@ -112,7 +138,8 @@
   .card.locked{opacity:.45}
 
   /* ─── конфетти ─── */
-  #confetti{position:fixed;inset:0;z-index:45;pointer-events:none;overflow:hidden;display:none}
+  /* поверх всего: сыплется и на карте, и на экране уровня */
+  #confetti{position:fixed;inset:0;z-index:90;pointer-events:none;overflow:hidden;display:none}
   #confetti.on{display:block}
   #confetti span{position:absolute;width:9px;height:14px;border-radius:2px;animation:fall 1.5s ease-out forwards}
   @keyframes fall{
@@ -121,16 +148,15 @@
   }
 
   /* ─── экран здания ─── */
-  #screen{position:fixed;inset:0;z-index:50;background:#000;display:none}
-  #screen.on{display:block}
-  #screen .back{position:fixed;left:8px;top:44px;z-index:60;border:0;background:none;
+  #screen{--shift:scale(.96);position:fixed;inset:0;z-index:50;background:#000;display:block}
+  #screen .back{position:absolute;left:8px;top:44px;z-index:60;border:0;background:none;
     color:#0a84ff;font:300 26px/24px inherit;padding:8px}
 
 
   /* ─── подсказки внутри генератора ─── */
-  #genSpeech{position:fixed;left:16px;right:16px;z-index:70;display:none;align-items:flex-start;gap:12px;
+  #genSpeech{--shift:translateY(-10px);
+    position:fixed;left:16px;right:16px;z-index:70;display:flex;align-items:flex-start;gap:12px;
     pointer-events:none}
-  #genSpeech.on{display:flex}
   #genSpeech img{flex:0 0 auto;width:66px;height:66px;object-fit:contain}
   #genSpeech .b{background:#3a3a3c;border-radius:18px;padding:14px 16px;font-size:16px;line-height:1.3;
     font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.5)}
@@ -148,8 +174,12 @@
     88%{offset-distance:100%;opacity:1;transform:scale(1)}
     100%{offset-distance:100%;opacity:0;transform:scale(.75)}}
 
-  #boostTip{position:fixed;z-index:71;display:none;transform:translate(-50%,0)}
-  #boostTip.on{display:block}
+  /* транслейт по X нужен всегда, поэтому появление играем масштабом внутри */
+  #boostTip{position:fixed;z-index:71;transform:translate(-50%,0);
+    visibility:hidden;opacity:0;transition:opacity .2s ease, visibility 0s linear .2s}
+  #boostTip.on{visibility:visible;opacity:1;transition:opacity .2s ease, visibility 0s}
+  #boostTip.on .box{animation:tippop .34s var(--ease) both}
+  @keyframes tippop{from{transform:scale(.8) translateY(-8px);opacity:0}to{transform:none;opacity:1}}
   #boostTip .box{background:#428bf9;border-radius:16px;padding:12px 14px;min-width:150px;text-align:center;
     box-shadow:0 10px 26px rgba(0,0,0,.5);position:relative}
   #boostTip .box b{display:block;font-size:16px;font-weight:700;margin-bottom:8px}
@@ -160,28 +190,61 @@
   #boostTip .nose{position:absolute;left:50%;top:-7px;transform:translateX(-50%) rotate(45deg);
     width:14px;height:14px;background:#428bf9;border-radius:3px}
 
-  #level{position:fixed;inset:0;z-index:80;background:#000;display:none;flex-direction:column;
-    align-items:center;padding:64px 20px 34px}
-  #level.on{display:flex}
-  #level .num{width:96px;height:96px;border-radius:50%;background:#3a3a3c;display:grid;place-items:center;
-    font-size:40px;font-weight:700;margin-top:70px}
-  #level h2{margin:24px 0 0;font-size:30px;font-weight:700}
-  #level .reward{margin-top:10px;color:#8e8e93;font-size:15px;display:flex;align-items:center;gap:8px}
-  #level .reward b{background:rgba(255,255,255,.12);border-radius:100px;padding:6px 12px;color:#fff;font-size:14px}
-  #level .got{margin-top:44px;color:#8e8e93;font-size:14px}
+  /* ─── экран нового уровня ─── */
+  /* Появляется не разом: сперва подложка, потом медаль, потом строчки —
+     иначе это читается как вырубленный свет, а не как награда. */
+  #level{position:fixed;inset:0;z-index:80;display:flex;flex-direction:column;
+    align-items:center;padding:64px 20px 34px;text-align:center;
+    background:radial-gradient(120% 70% at 50% 20%,#1d2740 0%,#07070a 62%,#000 100%);
+    visibility:hidden;opacity:0;transition:opacity .34s ease, visibility 0s linear .34s}
+  #level.on{visibility:visible;opacity:1;transition:opacity .3s ease, visibility 0s}
+  #level .medal{position:relative;width:118px;height:118px;border-radius:50%;margin-top:52px;
+    display:grid;place-items:center;box-shadow:0 0 70px rgba(255,214,10,.4)}
+  #level .medal::before{content:"";position:absolute;inset:0;border-radius:50%;
+    background:conic-gradient(from 0deg,#ffd60a,#ff9f0a,#ffe98a,#ff9f0a,#ffd60a);
+    animation:medalspin 6s linear infinite}
+  #level .medal span{position:relative;width:100px;height:100px;border-radius:50%;background:#0a0a0c;
+    display:grid;place-items:center;font-size:44px;font-weight:700;letter-spacing:-1px}
+  @keyframes medalspin{to{transform:rotate(360deg)}}
+  #level h2{margin:26px 0 0;font-size:30px;font-weight:700;letter-spacing:-.3px}
+  #level .sub{margin:8px 0 0;color:#8e8e93;font-size:15px}
+  #level .reward{margin-top:22px;display:inline-flex;align-items:center;gap:8px;
+    background:rgba(255,214,10,.14);border:1px solid rgba(255,214,10,.35);color:#ffd60a;
+    border-radius:100px;padding:10px 18px;font-size:17px;font-weight:700}
+  #level .reward i{width:18px;height:18px;border-radius:50%;display:block}
+  #level .got{margin-top:38px;color:#8e8e93;font-size:14px}
   #level .items{display:flex;gap:12px;margin-top:12px}
-  #level .items div{width:64px;height:64px;border-radius:12px;background:rgba(255,255,255,.1);
+  #level .items div{width:64px;height:64px;border-radius:14px;background:rgba(255,255,255,.1);
     display:grid;place-items:center;font-size:30px}
   #level .take{margin-top:auto;width:100%;background:#ffd60a;color:#000;border:0;border-radius:14px;
     padding:17px;font:600 16px/1 inherit}
+  #level .take:active{transform:scale(.98)}
+
+  /* выезд по очереди: медаль с отскоком, остальное — снизу вверх */
+  #level.on .medal{animation:medalpop .6s cubic-bezier(.34,1.5,.64,1) both}
+  #level.on h2{animation:lvlrise .45s var(--ease) .12s both}
+  #level.on .sub{animation:lvlrise .45s var(--ease) .18s both}
+  #level.on .reward{animation:lvlrise .45s var(--ease) .26s both}
+  #level.on .got{animation:lvlrise .45s var(--ease) .34s both}
+  #level.on .items div{animation:medalpop .5s cubic-bezier(.34,1.5,.64,1) both}
+  #level.on .items div:nth-child(1){animation-delay:.42s}
+  #level.on .items div:nth-child(2){animation-delay:.5s}
+  #level.on .take{animation:lvlrise .45s var(--ease) .6s both}
+  @keyframes medalpop{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+  @keyframes lvlrise{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
 
   /* ═══ сюжетный слой онбординга ═══ */
   /* панель стоит над кнопкой «Постройки», иначе перекрывает её и флоу встаёт;
      касания ловит только на шагах, которые листаются тапом */
-  #story{position:fixed;left:0;right:0;bottom:0;z-index:60;display:none;padding:0 12px 22px;
+  #story{--shift:translateY(18px);
+    position:fixed;left:0;right:0;bottom:0;z-index:60;display:block;padding:0 12px 22px;
     pointer-events:none}
   #story.tap{pointer-events:auto}
-  #story.on{display:block}
+  /* смена реплики: бабл подхватывается заново, персонаж — только когда меняется */
+  #story.swap .bubble{animation:bubblein .34s var(--ease)}
+  #story.swapWho .who img{animation:heroin .38s var(--ease)}
+  @keyframes bubblein{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
+  @keyframes heroin{from{transform:translateY(24px) scale(.94);opacity:0}to{transform:none;opacity:1}}
   #story .who{position:relative;display:flex;align-items:flex-end;gap:0;margin-left:4px}
   #story .who img{height:150px;width:auto;display:block;filter:drop-shadow(0 8px 18px rgba(0,0,0,.5))}
   #story .who .name{position:absolute;left:14px;bottom:-8px;border-radius:8px;padding:4px 10px;
@@ -197,9 +260,11 @@
   @keyframes nextnudge{0%,100%{transform:translateY(0);opacity:.75}50%{transform:translateY(3px);opacity:1}}
 
   /* стрелка-указатель на элемент интерфейса */
-  #point{position:fixed;z-index:62;display:none;font-size:44px;color:#ffd60a;pointer-events:none;
-    filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
-  #point.on{display:block;animation:pnudge .9s ease-in-out infinite}
+  #point{position:fixed;z-index:62;font-size:44px;color:#ffd60a;pointer-events:none;
+    filter:drop-shadow(0 4px 10px rgba(0,0,0,.5));
+    visibility:hidden;opacity:0;transition:opacity .25s ease, visibility 0s linear .25s}
+  #point.on{visibility:visible;opacity:1;transition:opacity .25s ease .1s, visibility 0s;
+    animation:pnudge .9s ease-in-out infinite}
   @keyframes pnudge{0%,100%{transform:translate(0,0)}50%{transform:translate(0,10px)}}
 
   /* зёрна улетают за экран после ускорения */
@@ -233,7 +298,7 @@
   <button class="primary" id="openSheet">🔨 Постройки</button>
 </div>
 
-<div id="sheet">
+<div id="sheet" class="veil">
   <div class="sheetTop">
     <div class="row">
       <button class="back" aria-label="Назад">‹</button>
@@ -248,18 +313,18 @@
 
 <div id="confetti"></div>
 
-<div id="story">
+<div id="story" class="veil">
   <div class="who"><img alt=""><span class="name"></span></div>
   <div class="bubble"><span class="text"></span><button class="next" aria-label="Дальше">▼</button></div>
 </div>
 <div id="point">⬇</div>
 
-<div id="screen">
+<div id="screen" class="veil">
   <button class="back" aria-label="Назад">‹</button>
   <div id="app"></div>
 
 </div>
-  <div id="genSpeech"><img alt=""><div class="b"></div></div>
+  <div id="genSpeech" class="veil"><img alt=""><div class="b"></div></div>
   <div id="genDemo"></div>
 
   <div id="boostTip">
@@ -272,10 +337,11 @@
   </div>
 
   <div id="level">
-    <div class="num">2</div>
-    <h2>Новый уровень</h2>
-    <div class="reward">Заберите награду: <b>🪙 93</b></div>
-    <div class="got">Теперь вам доступны</div>
+    <div class="medal"><span>2</span></div>
+    <h2>Уровень 2</h2>
+    <p class="sub">Ферма растёт вместе с тобой</p>
+    <div class="reward"><i class="i-coin"></i>+93</div>
+    <div class="got">Теперь доступны</div>
     <div class="items"><div>🌾</div><div>🍌</div></div>
     <button class="take">Забрать награду</button>
   </div>
@@ -353,7 +419,10 @@ load();
 const canvas = document.getElementById('canvas');
 const hintline = document.getElementById('hintline');
 const coinsEl = document.getElementById('coins');
-function paintAll(){
+/* popId — здание, которое только что появилось: оно въезжает с отскоком.
+   Остальные перерисовываются молча, иначе анимация играла бы на всех
+   сразу при каждом обновлении карты. */
+function paintAll(popId){
   // здания перерисовываем целиком: их немного, а код проще
   [...canvas.querySelectorAll('.plot')].forEach(el => el.remove());
   built.forEach(b => {
@@ -375,6 +444,7 @@ function paintAll(){
        : b.state === 'gift'   ? '<div class="chip unlock">🔓</div>'
        : b.id === 'gen'       ? `<div class="label">Генератор</div>`
        : `<div class="label">${item.name}</div>`);
+    if(b.id === popId) el.classList.add('pop');
     canvas.appendChild(el);
   });
   coinsEl.textContent = coins.toLocaleString('ru');
@@ -441,13 +511,13 @@ function renderPlacing(){
   say('Перетащи здание, куда поставить');
 }
 
-function stopPlacing(){
+function stopPlacing(popId){
   placing = null;
   ghostEl?.remove();
   ghostEl = null;
   document.body.classList.remove('placing');
   dock.innerHTML = '<button class="primary" id="openSheet">🔨 Постройки</button>';
-  paintAll();
+  paintAll(popId);
 }
 
 const dock = document.getElementById('dock');
@@ -459,10 +529,11 @@ dock.addEventListener('click', e => {
   if(b.id === 'flip'){ placing.flip = !placing.flip; return renderPlacing(); }
   if(b.id === 'confirm'){
     const item = itemById(placing.itemId);
+    const id = 'b' + (seq++);
     coins -= item.price;
-    built.push({ id:'b' + (seq++), itemId:item.id, state:'building',
+    built.push({ id, itemId:item.id, state:'building',
                  endsAt:Date.now() + BUILD_MS, flip:placing.flip, x:placing.x, y:placing.y });
-    stopPlacing();
+    stopPlacing(id);              // стройка встаёт на место с отскоком
     save();
     say(`${item.name} строится`);
   }
@@ -489,7 +560,7 @@ canvas.addEventListener('click', e => {
 /* раскрываем подарок → конфетти → здание готово */
 function unwrap(b){
   b.state = 'ready';
-  paintAll();
+  paintAll(b.id);
   save();
   confetti();
   scFire('built');
@@ -701,13 +772,19 @@ function openGenerator(){
   scFire('generatorOpened');
 }
 
+/* закрываем всё, что живёт поверх генератора, одним местом */
+function closeGenerator(){
+  screen.classList.remove('on');
+  clearInterval(boostTimer);
+  boostTip.classList.remove('on');
+  hideGenHint();
+}
+
 /* Выход из генератора посреди обучения возвращал на карту без реплик и
    без кнопки «Постройки» — флоу вставал намертво. Отматываем сюжет на
    приглашение зайти в генератор: человек всегда может зайти заново. */
 screen.querySelector('.back').addEventListener('click', () => {
-  screen.classList.remove('on');
-  hideGenHint();
-  boostTip.classList.remove('on');
+  closeGenerator();
   levelBox.classList.remove('on');
   if(inGenPart()){
     genWait = null;
@@ -724,13 +801,12 @@ function resetWorld(){
   load(); save();
   gen0.reset();
   document.getElementById('oldman').classList.remove('on');
-  screen.classList.remove('on');
+  closeGenerator();
   closeSheet();
-  hideGenHint();
-  boostTip.classList.remove('on');
   levelBox.classList.remove('on');
   if(placing) stopPlacing(); else paintAll();
   genWait = null;
+  lastWho = null;
   fit();
   sc = -1; scNext();
 }
@@ -760,36 +836,54 @@ const CAST = {
   granny:   { name:'Бабуся',  img:'../assets/onboarding/Granny.png', cls:'granny' },
 };
 
+/* Сюжет держится на одном желании: внуку нужен кофе. Дальше цепочка
+   без разрывов — зерно, кофейня, чашка. Каждая реплика либо двигает
+   желание, либо объясняет следующее действие; болтовни ради болтовни нет.
+
+   Про латте и американо. Дед просит чёрный — это видно по чашке в его
+   облачке. Внук хочет латте на безлактозном. Разные напитки не ошибка,
+   а сама шутка: на финале кофейня делает оба. */
 const SCRIPT = [
   { who:'grandson', text:'Приехал с города, а в деревне минус вайб — нет моей любимой латте на безлактозном молоке' },
   { who:'granny',   text:'А ты че думал, шегол? В деревне не все так просто, тут нужно со знанием дела, по совести, без суеты бэм бэм…' },
-  { who:'grandson', text:'Очень хочется кофе, кажется бабуся говорила нужно начать с кофейных зерен? Как их там делать то?' },
+  { who:'grandson', text:'Ну а если по делу? Мне бы хоть зёрен раздобыть, дальше я сам' },
 
   // камера подъезжает к генератору, над ним стрелка
-  { who:'granny', text:'С генератора и начинай. Зёрна сами не вырастут — жми, покажу',
+  { who:'granny', text:'С генератора и начинай — он зёрна и растит. Жми, покажу',
     focus:'generator', pointAt:'.plot[data-id="gen"]', wait:'generatorOpened' },
 
   // ── внутри генератора ──
   { gen:'seed' },
   { gen:'boost' },
-  { gen:'level' },
 
-  // ── обратно на карту ──
-  { who:'granny', text:'Вон и Дядь Вася подтянулся — учуял. Зёрна есть, давай сделаем из них кофеек',
+  // ── обратно на карту: уровень, потом наезд камеры на деда ──
+  { level:true },
+  { who:'granny', text:'А вот и Дядь Вася — на запах пришёл. Ему чёрный, без ваших молок',
     focus:'oldman', showOldman:true },
-  // без реплики: на экране только кнопка и стрелка на неё
+  { who:'grandson', text:'Зёрна есть, а варить негде. Ставим кофейню' },
+  // без реплики: панель ушла, на экране осталась кнопка и стрелка на неё
   { pointAt:'#openSheet', wait:'sheetOpened' },
   { pointAt:'[data-cat="Преобразователи"]', wait:'catOpened' },
-  { who:'grandson', text:'Нам нужна кофейня давай строить',
+  { who:'grandson', text:'Вот она. Берём',
     pointAt:'[data-item="coffee"]', wait:'placing' },
   { hint:'Перетащи здание, куда поставить, и жми «Построить»', wait:'built' },
-  { who:'grandson', text:'Кофейня стоит! Всё, я за латте на безлактозном — бабуся, тебе брать?' },
+  { who:'grandson', text:'Дядь Васе — американо, себе — латте на безлактозном. Вот теперь вайб' },
 ];
 
-let sc = -1, scWait = null, shownAt = 0;
+let sc = -1, scWait = null, shownAt = 0, lastWho = null;
 
 // шаги внутри генератора помечены полем gen — по ним отматываем назад
 const inGenPart = () => !!SCRIPT[sc]?.gen;
+
+/* Реплика меняется — бабл подхватывается заново. Персонажа дёргаем
+   только когда он действительно сменился: иначе он подпрыгивал на
+   каждой своей же фразе. */
+function replayStoryAnim(whoChanged){
+  story.classList.remove('swap', 'swapWho');
+  void story.offsetWidth;                     // перезапуск анимации
+  story.classList.add('swap');
+  if(whoChanged) story.classList.add('swapWho');
+}
 
 function scNext(){
   sc++;
@@ -801,12 +895,13 @@ function scNext(){
     story.classList.remove('on');
     genSpeech.classList.remove('on');
     scWait = null;
-    dock.style.display = '';
+    dock.classList.remove('hide');
     return;
   }
   const st = SCRIPT[sc];
 
   if(st.gen){ story.classList.remove('on'); return genStep(st.gen); }
+  if(st.level){ story.classList.remove('on'); return showLevel(); }
 
   // поверх каталога показываем компактный бабл: персонаж в полный рост
   // закрыл бы карточки, в макете там аватар сверху
@@ -822,27 +917,33 @@ function scNext(){
     } else genSpeech.classList.remove('on');
   } else {
     genSpeech.classList.remove('on');
+    const whoChanged = st.who && st.who !== lastWho;
     if(st.who){
       const c = CAST[st.who];
-      storyImg.src = c.img;
-      storyName.textContent = c.name;
-      storyName.className = 'name ' + c.cls;
+      if(whoChanged){
+        storyImg.src = c.img;
+        storyName.textContent = c.name;
+        storyName.className = 'name ' + c.cls;
+      }
       story.querySelector('.who').style.display = '';
     } else {
       story.querySelector('.who').style.display = 'none';
     }
+    lastWho = st.who || lastWho;
     storyText.textContent = st.text || '';
     // без реплики панель не показываем: пустая плашка выглядела мусором
     story.classList.toggle('on', !!st.text);
     story.classList.toggle('tap', !!st.text && !st.wait);
+    if(st.text) replayStoryAnim(whoChanged);
   }
 
   if(st.hint) say(st.hint);
   if(st.showOldman) document.getElementById('oldman').classList.add('on');
-  // пока персонаж говорит, кнопка «Постройки» скрыта — она крупная и отвлекает
-  // прячем только приглашение строить: в режиме размещения внизу
-  // живут ✕, поворот и «Построить» — их гасить нельзя
-  dock.style.display = (st.text && !overSheet && !placing) ? 'none' : '';
+  // Пока персонаж говорит, кнопка «Постройки» уезжает — она крупная и отвлекает.
+  // Но если шаг сам показывает стрелкой на неё, прятать нельзя: жать было бы некуда.
+  // В режиме размещения внизу живут ✕, поворот и «Построить» — их не трогаем.
+  const pointsAtDock = st.pointAt && dock.querySelector(st.pointAt);
+  dock.classList.toggle('hide', !!(st.text && !overSheet && !placing && !pointsAtDock));
   if(st.focus) focusOn(st.focus);
   if(st.pointAt) setTimeout(() => pointTo(st.pointAt), st.focus ? 700 : 60);
 
@@ -881,8 +982,9 @@ function focusOn(what){
   const to = { s:z, x: innerWidth/2 - target.x*z, y: cy - target.y*z };
   const t0 = performance.now();
   (function tick(now){
-    const k = Math.min(1, (now - t0)/650);
-    const e = 1 - Math.pow(1 - k, 3);
+    const k = Math.min(1, (now - t0)/900);
+    // разгон и торможение: чистый ease-out стартовал рывком
+    const e = k < .5 ? 4*k*k*k : 1 - Math.pow(-2*k + 2, 3)/2;
     scale = from.s + (to.s - from.s)*e;
     ox = from.x + (to.x - from.x)*e;
     oy = from.y + (to.y - from.y)*e;
@@ -927,14 +1029,12 @@ function hidePoint(){ pointSel = null; cancelAnimationFrame(pointRaf); point.cla
 
 function genStep(kind){
   if(kind === 'seed'){
-    genBubble('Давай посадим наши первые кофейные зерна', true);
+    genBubble('Тащи зерно на грядки — сажай во все сразу', true);
     genWait = 'allSeeded';
   } else if(kind === 'boost'){
     genBubble('Ждать неохота? Ускорь — зёрна поспеют сразу', false);
     showBoostTip();
     genWait = 'boosted';
-  } else if(kind === 'level'){
-    showLevel();
   }
 }
 
@@ -1017,6 +1117,9 @@ function tickBoost(){
   boostTimer = setInterval(draw, 500);
 }
 
+/* Ускорил — зёрна улетают, и мы сразу возвращаемся на карту: держать
+   человека на пустых грядках нечем, а уровень читается лучше на фоне
+   фермы, чем поверх служебного экрана. Дальше уровень, потом наезд камеры. */
 boostTip.querySelector('.boost').addEventListener('click', () => {
   boostTip.classList.remove('on');
   clearInterval(boostTimer);
@@ -1025,7 +1128,11 @@ boostTip.querySelector('.boost').addEventListener('click', () => {
   const cells = [...document.querySelectorAll('#app .cell')];
   gen.setCells(cells.map((_, i) => ({ index:i, state:'empty' })));
   genWait = null;
-  setTimeout(scNext, 800);
+  // зёрна долетают (последнее стартует с задержкой), затем закрываем экран
+  setTimeout(() => {
+    closeGenerator();
+    setTimeout(scNext, 380);        // дожидаемся, пока экран уедет
+  }, 620);
 });
 
 /* зёрна улетают вверх-вправо за экран, а не просто исчезают */
@@ -1047,13 +1154,17 @@ function flyAwayBeans(){
   });
 }
 
-function showLevel(){ hideGenHint(); levelBox.classList.add('on'); }
+/* уровень показываем уже на карте — генератор к этому моменту закрыт */
+function showLevel(){
+  hideGenHint();
+  levelBox.classList.add('on');
+  setTimeout(confetti, 420);        // сыплется под самый выезд медали
+}
 
-// забрал награду — генератор закрывается сам, дальше сюжет на карте
+// забрал награду — экран уходит, и только потом камера едет к деду
 levelBox.querySelector('.take').addEventListener('click', () => {
   levelBox.classList.remove('on');
-  screen.classList.remove('on');
-  scNext();
+  setTimeout(scNext, 340);
 });
 
 /* засеял весь ряд — сразу тултип ускорения, ждать не заставляем.
