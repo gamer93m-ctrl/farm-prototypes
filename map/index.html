@@ -281,6 +281,11 @@
     position:fixed;left:0;right:0;bottom:0;z-index:60;display:block;padding:0 12px 22px;
     pointer-events:none}
   #story.tap{pointer-events:auto}
+  /* Ловушка на весь экран: реплику листает тап где угодно, а не только по
+     баблу. Заодно на время реплики карта не ездит под пальцем. Включается
+     только на шагах, которые ничего не ждут. */
+  #tapcatch{position:fixed;inset:0;z-index:59;display:none}
+  #tapcatch.on{display:block}
   /* смена реплики: бабл подхватывается заново, персонаж — только когда меняется */
   #story.swap .bubble{animation:bubblein .34s var(--ease)}
   #story.swapWho .who img{animation:heroin .38s var(--ease)}
@@ -354,6 +359,7 @@
 
 <div id="confetti"></div>
 
+<div id="tapcatch"></div>
 <div id="story" class="veil">
   <div class="who"><img alt=""><span class="name"></span></div>
   <div class="bubble"><span class="text"></span><button class="next" aria-label="Дальше">▼</button></div>
@@ -914,6 +920,7 @@ function resetWorld(){
   // сюжет ждёт: сперва человек читает, что это за игра и что он сейчас сделает
   sc = -1;
   story.classList.remove('on');
+  document.getElementById('tapcatch').classList.remove('on');
   dock.classList.add('hide');
   intro.classList.add('on');
 }
@@ -1007,11 +1014,16 @@ function scNext(){
   if(sc >= SCRIPT.length){
     story.classList.remove('on');
     genSpeech.classList.remove('on');
+    tapcatch.classList.remove('on');
     scWait = null;
     dock.classList.remove('hide');
     return;
   }
   const st = SCRIPT[sc];
+
+  // тап куда угодно листает реплику — но только там, где мы ничего не ждём.
+  // Считаем до ранних выходов: на шагах генератора и уровня ловушка не нужна
+  tapcatch.classList.toggle('on', !!(st.text && !st.wait));
 
   if(st.gen){ story.classList.remove('on'); return genStep(st.gen); }
   if(st.level){ story.classList.remove('on'); return showLevel(); }
@@ -1073,12 +1085,15 @@ function scNext(){
    держит паузу: иначе случайные и повторные касания проматывали
    сразу несколько шагов. */
 const STEP_GUARD_MS = 400;
+const tapcatch = document.getElementById('tapcatch');
 
-story.addEventListener('click', () => {
+function tryAdvance(){
   if(scWait) return;
   if(Date.now() - shownAt < STEP_GUARD_MS) return;
   scNext();
-});
+}
+story.addEventListener('click', tryAdvance);
+tapcatch.addEventListener('click', tryAdvance);
 
 /* ─── камера ─── */
 
