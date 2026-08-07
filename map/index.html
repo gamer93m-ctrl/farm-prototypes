@@ -305,13 +305,17 @@
   #story.swapWho .who img{animation:heroin .38s var(--ease)}
   @keyframes bubblein{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
   @keyframes heroin{from{transform:translateY(24px) scale(.94);opacity:0}to{transform:none;opacity:1}}
-  #story .who{position:relative;display:flex;align-items:flex-end;gap:0;margin-left:4px}
+  /* Картинки персонажей обрезаны по пояс. Между срезом и баблом зияла
+     чёрная дыра, поэтому бабл поднят вплотную: срез уходит под него,
+     а плашка с именем ложится на самый край. */
+  #story .who{position:relative;display:flex;align-items:flex-end;gap:0;margin-left:4px;
+    margin-bottom:-22px;z-index:1}
   #story .who img{height:150px;width:auto;display:block;filter:drop-shadow(0 8px 18px rgba(0,0,0,.5))}
-  #story .who .name{position:absolute;left:14px;bottom:-8px;border-radius:8px;padding:4px 10px;
+  #story .who .name{position:absolute;left:14px;bottom:14px;border-radius:8px;padding:4px 10px;
     font:700 13px/1 inherit;color:#fff}
   #story .who .name.grandson{background:#d5341f}
   #story .who .name.granny{background:#7b5cff}
-  #story .bubble{margin-top:14px;background:#1c1c1e;border-radius:18px;padding:16px 18px 20px;
+  #story .bubble{margin-top:0;background:#1c1c1e;border-radius:18px;padding:16px 18px 20px;
     font-size:16px;line-height:1.35;font-weight:500;position:relative;box-shadow:0 10px 30px rgba(0,0,0,.6)}
   /* значок «дальше» — только подсказка: листает тап по всей панели */
   #story .bubble .next{position:absolute;right:10px;bottom:6px;color:#ffd60a;font-size:20px;
