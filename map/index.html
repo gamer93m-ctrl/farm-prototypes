@@ -1320,12 +1320,21 @@ const boostTip  = document.getElementById('boostTip');
 const levelBox  = document.getElementById('level');
 let genWait = null, reseedTimer = null, boostTimer = null;
 
+/* Бабл встаёт над игровой зоной, а не поверх неё: цепляемся за самый
+   верхний её блок — сцену, если она есть, иначе сетку. Выше остаётся
+   только заголовок, его перекрыть не жалко. */
 function genBubble(text, withDemo){
   genSpeech.querySelector('img').src = '../assets/onboarding/avatar maloy-mini.png';
   genSpeech.querySelector('.b').textContent = text;
-  const grid = document.querySelector(genHost + ' .block');
-  if(grid) genSpeech.style.top = Math.max(96, grid.getBoundingClientRect().top - 130) + 'px';
   genSpeech.classList.add('on');
+
+  const host = document.querySelector(genHost);
+  const hero = host.querySelector('#hero');
+  const anchor = (hero && hero.innerHTML.trim()) ? hero : host.querySelector('.block');
+  if(anchor){
+    const top = anchor.getBoundingClientRect().top - genSpeech.offsetHeight - 10;
+    genSpeech.style.top = Math.max(50, top) + 'px';
+  }
   if(withDemo) drawGenDemo(); else genDemo.classList.remove('on');
 }
 function hideGenHint(){

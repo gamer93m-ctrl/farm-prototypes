@@ -81,9 +81,13 @@
   /* ─── сцена над грядками ─── */
   /* Карточка, в которой видно, что здание делает: у преобразователя там
      стоит человек за машиной. Пустая — не занимает ни пикселя. */
-  #hero{flex:0 0 auto;margin:0 16px;background:#1c1c1e;border-radius:20px;overflow:hidden}
+  /* по ширине ровно как сетка — карточка и грядки читаются одним блоком */
+  #hero{flex:0 0 auto;width:var(--block-w);margin:0 auto;background:#1c1c1e;
+    border-radius:20px;overflow:hidden}
   #hero:empty{display:none}
-  #phone.compact #hero{margin:0 16px}
+  /* со сценой сетка прижимается к ней сверху (отступ — padding у stage),
+     а свободная высота уходит вниз, к лотку */
+  #phone.withhero #stage{align-items:flex-start}
 
   /* ─── сетка блоков ─── */
   /* сетка забирает свободную высоту, минимальные поля сверху и снизу гарантированы */

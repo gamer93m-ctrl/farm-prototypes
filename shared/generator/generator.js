@@ -984,7 +984,7 @@ function render(){
   // и две стрелки наезжали друг на друга в углу
   if(opts.back === false) $('#back').style.display = 'none';
   if(opts.title) $('#title').textContent = opts.title;
-  if(opts.hero)  $('#hero').innerHTML = opts.hero;
+  if(opts.hero){ $('#hero').innerHTML = opts.hero; $('#phone').classList.add('withhero'); }
   if(opts.dim) $('#phone').classList.add('dim');
 
   render();
