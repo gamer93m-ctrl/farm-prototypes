@@ -78,6 +78,13 @@
   }
   #desc{margin-top:18px;font-size:17px;letter-spacing:-.41px;color:#8e8e93}
 
+  /* ─── сцена над грядками ─── */
+  /* Карточка, в которой видно, что здание делает: у преобразователя там
+     стоит человек за машиной. Пустая — не занимает ни пикселя. */
+  #hero{flex:0 0 auto;margin:0 16px;background:#1c1c1e;border-radius:20px;overflow:hidden}
+  #hero:empty{display:none}
+  #phone.compact #hero{margin:0 16px}
+
   /* ─── сетка блоков ─── */
   /* сетка забирает свободную высоту, минимальные поля сверху и снизу гарантированы */
   #stage{

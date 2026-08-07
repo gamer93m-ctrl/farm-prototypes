@@ -13,6 +13,7 @@
      cells,    сколько ячеек в блоке (по умолчанию 25 — сетка 5×5)
      types,    свой набор ресурсов вместо стандартного
      title,    заголовок экрана (по умолчанию «Генератор»)
+     hero,     разметка сцены над грядками (что происходит внутри здания)
      chrome    false — спрятать служебную кнопку версий
      back      false — спрятать «‹»: у хоста своя
    }) → API
@@ -47,6 +48,10 @@ const GENERATOR_MARKUP = String.raw`<div id="phone">
     <div id="title">Генератор</div>
     <div id="desc">Доступно <span id="free">0</span> ячеек</div>
   </div>
+
+  <!-- сцена над грядками: у преобразователя тут показывают, что происходит
+       внутри здания. Пустая — схлопывается и места не занимает -->
+  <div id="hero"></div>
 
   <div id="stage">
     <div id="scroller"></div>
@@ -979,6 +984,7 @@ function render(){
   // и две стрелки наезжали друг на друга в углу
   if(opts.back === false) $('#back').style.display = 'none';
   if(opts.title) $('#title').textContent = opts.title;
+  if(opts.hero)  $('#hero').innerHTML = opts.hero;
   if(opts.dim) $('#phone').classList.add('dim');
 
   render();
