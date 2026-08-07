@@ -167,8 +167,8 @@
     filter:drop-shadow(0 18px 40px rgba(255,214,10,.28))}
   #intro .logo{margin-top:6px;font-size:36px;font-weight:700;letter-spacing:-.6px}
   #intro .logo b{color:#ffd60a}
-  #intro .lead{margin-top:10px;color:#a5a5ad;font-size:16px;line-height:1.35;max-width:300px}
-  #intro ol{list-style:none;margin:26px 0 0;padding:0;display:flex;flex-direction:column;gap:10px;
+  #intro .lead{margin-top:12px;color:#a5a5ad;font-size:19px;font-weight:600;line-height:1.3}
+  #intro ol{list-style:none;margin:30px 0 0;padding:0;display:flex;flex-direction:column;gap:10px;
     width:100%;max-width:330px;text-align:left}
   #intro li{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.07);
     border-radius:14px;padding:13px 15px;font-size:15px;font-weight:500}
@@ -235,27 +235,28 @@
      иначе это читается как вырубленный свет, а не как награда. */
   #level{position:fixed;inset:0;z-index:80;display:flex;flex-direction:column;
     align-items:center;padding:64px 20px 34px;text-align:center;
-    background:radial-gradient(120% 70% at 50% 20%,#1d2740 0%,#07070a 62%,#000 100%);
+    background:radial-gradient(90% 45% at 50% 26%,#0d2233 0%,#000 70%);
     visibility:hidden;opacity:0;transition:opacity .34s ease, visibility 0s linear .34s}
   #level.on{visibility:visible;opacity:1;transition:opacity .3s ease, visibility 0s}
-  #level .medal{position:relative;width:118px;height:118px;border-radius:50%;margin-top:52px;
-    display:grid;place-items:center;box-shadow:0 0 70px rgba(255,214,10,.4)}
-  #level .medal::before{content:"";position:absolute;inset:0;border-radius:50%;
-    background:conic-gradient(from 0deg,#ffd60a,#ff9f0a,#ffe98a,#ff9f0a,#ffd60a);
-    animation:medalspin 6s linear infinite}
-  #level .medal span{position:relative;width:100px;height:100px;border-radius:50%;background:#0a0a0c;
-    display:grid;place-items:center;font-size:44px;font-weight:700;letter-spacing:-1px}
-  @keyframes medalspin{to{transform:rotate(360deg)}}
-  #level h2{margin:26px 0 0;font-size:30px;font-weight:700;letter-spacing:-.3px}
-  #level .sub{margin:8px 0 0;color:#8e8e93;font-size:15px}
-  #level .reward{margin-top:22px;display:inline-flex;align-items:center;gap:8px;
-    background:rgba(255,214,10,.14);border:1px solid rgba(255,214,10,.35);color:#ffd60a;
-    border-radius:100px;padding:10px 18px;font-size:17px;font-weight:700}
+  #level .close{position:absolute;left:16px;top:52px;border:0;background:none;
+    color:#0a84ff;font:400 17px/1 inherit;padding:6px}
+  #level .medal{position:relative;width:128px;height:128px;margin-top:86px;
+    display:grid;place-items:center;filter:drop-shadow(0 10px 34px rgba(2,157,224,.45))}
+  #level .medal img{width:100%;height:100%;display:block}
+  #level .medal span{position:absolute;font-size:44px;font-weight:700;letter-spacing:-1px;
+    text-shadow:0 2px 10px rgba(0,40,70,.55)}
+  #level h2{margin:24px 0 0;font-size:30px;font-weight:700;letter-spacing:-.3px}
+  #level .sub{margin:14px 0 0;color:#8e8e93;font-size:15px}
+  /* награда — двумя валютами, как в макете */
+  #level .reward{margin-top:10px;display:flex;gap:10px;justify-content:center}
+  #level .reward b{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.1);
+    border-radius:100px;padding:8px 14px;font-size:15px;font-weight:600}
   #level .reward i{width:18px;height:18px;border-radius:50%;display:block}
-  #level .got{margin-top:38px;color:#8e8e93;font-size:14px}
+  #level .got{margin-top:44px;color:#8e8e93;font-size:14px}
   #level .items{display:flex;gap:12px;margin-top:12px}
-  #level .items div{width:64px;height:64px;border-radius:14px;background:rgba(255,255,255,.1);
-    display:grid;place-items:center;font-size:30px}
+  #level .items div{width:74px;height:74px;border-radius:14px;background:rgba(255,255,255,.1);
+    display:grid;place-items:center;font-size:34px;overflow:hidden}
+  #level .items img{width:88%;height:88%;object-fit:contain}
   #level .take{margin-top:auto;width:100%;background:#ffd60a;color:#000;border:0;border-radius:14px;
     padding:17px;font:600 16px/1 inherit}
   #level .take:active{transform:scale(.98)}
@@ -379,23 +380,29 @@
   <div id="intro" class="veil">
     <img class="hero" src="../assets/map/Cafe.png" alt="">
     <div class="logo">Т<b>-</b>Ферма</div>
-    <p class="lead">Ферма, где всё нужное растишь и строишь сам. Начинаем с кофе.</p>
+    <p class="lead">Тестирование онбординга</p>
     <ol>
-      <li><span>1</span>Вырастить кофейные зёрна в генераторе</li>
-      <li><span>2</span>Собрать урожай, не дожидаясь таймера</li>
-      <li><span>3</span>Построить на карте кофейню</li>
+      <li><span>1</span>Пройти полностью путь</li>
+      <li><span>2</span>Активно комментировать свои мысли и действия</li>
+      <li><span>3</span>Финальная цель: выполнить заказ</li>
     </ol>
-    <p class="note">Пара минут. Бабуся с внуком подскажут по ходу — просто идите за стрелкой.</p>
     <button class="go">Поехали</button>
   </div>
 
   <div id="level">
-    <div class="medal"><span>2</span></div>
-    <h2>Уровень 2</h2>
-    <p class="sub">Ферма растёт вместе с тобой</p>
-    <div class="reward"><i class="i-coin"></i>+93</div>
-    <div class="got">Теперь доступны</div>
-    <div class="items"><div>🌾</div><div>🍌</div></div>
+    <button class="close">Закрыть</button>
+    <div class="medal"><img src="../assets/onboarding/Frame 2147224235.svg" alt=""><span>2</span></div>
+    <h2>Новый уровень</h2>
+    <p class="sub">Заберите награду:</p>
+    <div class="reward">
+      <b><i class="i-coin"></i>93</b>
+      <b><i class="i-gem"></i>93</b>
+    </div>
+    <div class="got">Теперь вам доступны</div>
+    <div class="items">
+      <div><img src="../assets/map/Cafe.png" alt=""></div>
+      <div>☕</div>
+    </div>
     <button class="take">Забрать награду</button>
   </div>
 
@@ -430,24 +437,26 @@ const CATALOG = [
 ];
 const itemById = id => CATALOG.flatMap(c => c.items).find(i => i.id === id);
 
-/* Размеры зданий сняты с самой карты: нарисованные на ней завод и генератор
-   стоят на основании в четыре тайла (334px). Кофейня рисовалась в 150px и
-   рядом с ними выглядела игрушечной.
-
-   У каждой картинки своя доля основания в общей ширине, поэтому масштаб
-   считается не по картинке целиком, а по её основанию:
-     w   — ширина отрисовки, при которой основание встаёт ровно в 4 тайла;
+/* Размеры зданий сняты с самой карты. У каждой картинки своя доля основания
+   в общей ширине, поэтому масштаб считается не по картинке целиком, а по её
+   основанию — тогда здания одного размера в тайлах выглядят одинаково:
+     t   — сколько тайлов занимает основание;
+     w   — ширина отрисовки, при которой основание встаёт ровно в t тайлов;
      off — на сколько низ картинки опускается ниже точки привязки, чтобы
-           центр основания лёг на неё. */
+           центр основания лёг на неё.
+
+   Кофейня заметно выше остальных, поэтому при равном основании смотрелась
+   громоздкой — ей три тайла против четырёх у приземистых завода и склада. */
+const TILE_W = 83.6, TILE_H = 44.1;
 const ART_FIT = {
-  'Cafe.png':                      { w:398, off:110 },
-  'Cafe-construction.png':         { w:335, off:87  },
-  'cafe-constructionend-open.png': { w:334, off:89  },
-  'building-generator.png':        { w:334, off:90  },
-  'building-order board.png':      { w:347, off:116 },
-  'building-barn.png':             { w:381, off:106 },
+  'Cafe.png':                      { t:3, w:299, off:83  },
+  'Cafe-construction.png':         { t:3, w:252, off:65  },
+  'cafe-constructionend-open.png': { t:3, w:251, off:67  },
+  'building-generator.png':        { t:4, w:334, off:90  },
+  'building-order board.png':      { t:4, w:347, off:116 },
+  'building-barn.png':             { t:4, w:381, off:106 },
 };
-const fitOf = src => ART_FIT[src.split('/').pop()] || { w:334, off:90 };
+const fitOf = src => ART_FIT[src.split('/').pop()] || { t:4, w:334, off:90 };
 
 /* Здания стоят где поставили: у каждого свои координаты на карте.
    Изометрия — ромбы, поэтому позицию притягиваем к решётке ромбов.
@@ -512,19 +521,20 @@ function paintAll(popId){
     const src = b.state === 'building' ? (item.artBuild || item.art)
               : b.state === 'gift'     ? (item.artGift  || item.art)
               : item.art;
-    const f = src ? fitOf(src) : null;
+    const f = src ? fitOf(src) : { t:4 };
+    // метка места и подпись идут по основанию: у зданий разный размер в тайлах
+    const pad = `<div class="pad" style="width:${(f.t*TILE_W).toFixed(0)}px;height:${(f.t*TILE_H).toFixed(0)}px"></div>`;
+    const labelTop = (f.t*TILE_H/2 + 8).toFixed(0);
     // чип висит внутри картинки — над крышей, а не над точкой привязки
     const chip = b.state === 'building' ? '<div class="chip">🕐 …</div>'
                : b.state === 'gift'     ? '<div class="chip unlock">🔓</div>' : '';
-    el.innerHTML =
-      (f ? `<div class="pad"></div>
-            <div class="art" style="width:${f.w}px;bottom:${-f.off}px">
-              <img src="${src}" alt="" style="transform:scaleX(${b.flip ? -1 : 1})">${chip}
-            </div>`
-         : `<div class="pad"></div>
-            <div class="hit" style="width:${item.hit?.w || 334}px;height:${item.hit?.h || 176}px;
-                 margin-top:${item.hit?.dy || 0}px"></div>${chip}`) +
-      (chip ? '' : `<div class="label">${b.id === 'gen' ? 'Генератор' : item.name}</div>`);
+    el.innerHTML = pad +
+      (src ? `<div class="art" style="width:${f.w}px;bottom:${-f.off}px">
+                <img src="${src}" alt="" style="transform:scaleX(${b.flip ? -1 : 1})">${chip}
+              </div>`
+           : `<div class="hit" style="width:${item.hit?.w || 334}px;height:${item.hit?.h || 176}px;
+                   margin-top:${item.hit?.dy || 0}px"></div>${chip}`) +
+      (chip ? '' : `<div class="label" style="top:${labelTop}px">${b.id === 'gen' ? 'Генератор' : item.name}</div>`);
     if(b.id === popId) el.classList.add('pop');
     canvas.appendChild(el);
   });
@@ -1263,8 +1273,10 @@ function showLevel(){
   setTimeout(confetti, 420);        // сыплется под самый выезд медали
 }
 
-// забрал награду — экран уходит, и только потом камера едет к деду
-levelBox.querySelector('.take').addEventListener('click', () => {
+// забрал награду — экран уходит, и только потом камера едет к деду.
+// «Закрыть» ведёт туда же: тупика на этом экране быть не должно
+levelBox.addEventListener('click', e => {
+  if(!e.target.closest('.take, .close')) return;
   levelBox.classList.remove('on');
   setTimeout(scNext, 340);
 });
