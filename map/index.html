@@ -71,6 +71,13 @@
     box-shadow:0 4px 12px rgba(0,0,0,.3)}
   .chip.unlock{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;
     font-size:26px;padding:0;animation:bob 1.2s ease-in-out infinite}
+  /* заказ ждёт: облачко с посылкой и зелёной галочкой, как у деда с кофе */
+  .chip.order{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;
+    font-size:30px;padding:0;animation:bob 1.6s ease-in-out infinite}
+  .chip.order i{position:absolute;right:-2px;top:-2px;width:24px;height:24px;border-radius:50%;
+    background:#30d158;color:#fff;font:700 13px/24px inherit;text-align:center;font-style:normal}
+  .chip.order::after{content:"";position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);
+    width:11px;height:11px;border-radius:50%;background:#fff}
   @keyframes bob{0%,100%{transform:translate(-50%,-100%)}50%{transform:translate(-50%,-125%)}}
 
   /* подпись — сразу под основанием, ромб основания кончается на 88px ниже точки */
@@ -191,6 +198,13 @@
   #screen{--shift:scale(.96);position:fixed;inset:0;z-index:50;background:#000;display:block}
   #screen .back{position:absolute;left:8px;top:44px;z-index:60;border:0;background:none;
     color:#0a84ff;font:300 26px/24px inherit;padding:8px}
+  /* Генератор и кофейня — два экрана одного вида. Держим оба в потоке:
+     с display:none модуль мерил бы нулевые размеры и собирал сетку кривой.
+     Переключаем прозрачностью, а не видимостью — visibility:visible на
+     хосте перебивал бы скрытый #screen, и закрытый экран продолжал бы
+     ловить касания по всей карте. */
+  #screen .host{position:absolute;inset:0;opacity:0;pointer-events:none}
+  #screen .host.on{opacity:1;pointer-events:auto}
 
 
   /* ─── подсказки внутри генератора ─── */
@@ -368,8 +382,8 @@
 
 <div id="screen" class="veil">
   <button class="back" aria-label="Назад">‹</button>
-  <div id="app"></div>
-
+  <div id="app" class="host"></div>
+  <div id="app2" class="host"></div>
 </div>
   <div id="genSpeech" class="veil"><img alt=""><div class="b"></div></div>
   <div id="genDemo"></div>
@@ -427,12 +441,13 @@ const CATALOG = [
       // нажатия задаём вручную — по размеру спрайта на карте
       { id:'gen', name:'Генератор', price:0, opens:'generator', art:'', hidden:true,
         hit:{ w:355, h:297, dy:-35 } },
-      { id:'coffee', name:'Кофейня', price:2000, opens:'generator',
+      { id:'coffee', name:'Кофейня', price:2000, opens:'cafe',
         art:'../assets/map/Cafe.png',
         artBuild:'../assets/map/Cafe-construction.png',
         artGift:'../assets/map/cafe-constructionend-open.png' },
       { id:'plant',  name:'Завод',   price:3500, art:'../assets/map/building-generator.png', opens:'generator' },
-      { id:'orders', name:'Доска заказов', price:1500, art:'../assets/map/building-order board.png' },
+      { id:'orders', name:'Доска заказов', price:1500, opens:'orders',
+        art:'../assets/map/building-order board.png' },
   ]},
   { cat:'Дома', icon:'../assets/map/building-barn.png', items:[
       { id:'house', name:'Домик', price:1200, art:'../assets/map/building-barn.png', locked:true },
@@ -520,6 +535,7 @@ function paintAll(popId){
     const el = document.createElement('div');
     el.className = 'plot';
     el.dataset.id = b.id;
+    el.dataset.item = b.itemId;      // по нему сюжет наводит стрелку на здание
     el.dataset.state = b.state;
     el.style.left = b.x + 'px';
     el.style.top  = b.y + 'px';
@@ -533,7 +549,8 @@ function paintAll(popId){
     const labelTop = (f.t*TILE_H/2 + 8).toFixed(0);
     // чип висит внутри картинки — над крышей, а не над точкой привязки
     const chip = b.state === 'building' ? '<div class="chip">🕐 …</div>'
-               : b.state === 'gift'     ? '<div class="chip unlock">🔓</div>' : '';
+               : b.state === 'gift'     ? '<div class="chip unlock">🔓</div>'
+               : b.order                ? '<div class="chip order">📦<i>✓</i></div>' : '';
     el.innerHTML = pad +
       (src ? `<div class="art" style="width:${f.w}px;bottom:${-f.off}px">
                 <img src="${src}" alt="" style="transform:scaleX(${b.flip ? -1 : 1})">${chip}
@@ -662,7 +679,9 @@ canvas.addEventListener('click', e => {
   if(b.state === 'building') return say('Ещё строится');
   if(b.state === 'gift')     return unwrap(b);
   const item = itemById(b.itemId);
-  if(item.opens === 'generator') return openGenerator();
+  if(item.opens === 'generator') return openBuilding('generator');
+  if(item.opens === 'cafe')      return openBuilding('cafe');
+  if(item.opens === 'orders')    return scFire('ordersOpened'), say('Экран заказа — следующий шаг прототипа');
   say(`${item.name}: экран пока не сделан`);
 });
 
@@ -867,21 +886,44 @@ viewport.addEventListener('wheel', e => {
 
 const screen = document.getElementById('screen');
 
-// генератор создаётся сразу: онбординг подписывается на его события
+/* Кофейня работает на той же механике, что генератор: те же грядки, тот же
+   сбор. Меняется только сырьё — она варит американо. Готовой картинки чашки
+   нет, поэтому эмодзи заворачиваем в svg и отдаём как обычную картинку. */
+const CUP = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="112" height="112">' +
+  '<text x="50%" y="50%" dy=".36em" font-size="92" text-anchor="middle">☕</text></svg>');
+
+// оба экрана создаются сразу: онбординг подписывается на их события
 const gen0 = createGenerator(document.getElementById('app'), {
   assets:'../assets', storeKey:'farm-onb-generator',
   mode:'single', cells:5, unlocked:['coffee'], chrome:false, dim:true,
-  version:'direct', back:false
+  version:'direct', back:false, title:'Генератор'
+});
+const cafeGen = createGenerator(document.getElementById('app2'), {
+  assets:'../assets', storeKey:'farm-onb-cafe',
+  mode:'single', cells:5, chrome:false, dim:true,
+  version:'direct', back:false, title:'Кофейня',
+  types:[{ id:'americano', name:'Американо', growMs:40*1000, image:CUP }]
 });
 const gen = gen0;
 
-function openGenerator(){
+/* какой экран сейчас открыт — от этого зависит, где искать грядки и лоток */
+let genHost = '#app', activeGen = gen0, openedBy = 'generatorOpened';
+
+function openBuilding(kind){
+  const cafe = kind === 'cafe';
+  genHost   = cafe ? '#app2' : '#app';
+  activeGen = cafe ? cafeGen : gen0;
+  openedBy  = cafe ? 'cafeOpened' : 'generatorOpened';
+  document.getElementById('app').classList.toggle('on', !cafe);
+  document.getElementById('app2').classList.toggle('on', cafe);
   screen.classList.add('on');
   dispatchEvent(new Event('resize'));
-  scFire('generatorOpened');
+  scFire(openedBy);
 }
+const openGenerator = () => openBuilding('generator');
 
-/* закрываем всё, что живёт поверх генератора, одним местом */
+/* закрываем всё, что живёт поверх экрана здания, одним местом */
 function closeGenerator(){
   screen.classList.remove('on');
   clearInterval(boostTimer);
@@ -897,7 +939,8 @@ screen.querySelector('.back').addEventListener('click', () => {
   levelBox.classList.remove('on');
   if(inGenPart()){
     genWait = null;
-    sc = SCRIPT.findIndex(s => s.wait === 'generatorOpened') - 1;
+    // отматываем к приглашению зайти именно в это здание, а не всегда в генератор
+    sc = SCRIPT.findIndex(s => s.wait === openedBy) - 1;
     scNext();
   }
 });
@@ -909,6 +952,10 @@ function resetWorld(){
   localStorage.removeItem(KEY);
   load(); save();
   gen0.reset();
+  cafeGen.reset();
+  genHost = '#app'; activeGen = gen0; openedBy = 'generatorOpened';
+  document.getElementById('app').classList.add('on');
+  document.getElementById('app2').classList.remove('on');
   document.getElementById('oldman').classList.remove('on');
   closeGenerator();
   closeSheet();
@@ -977,7 +1024,7 @@ const SCRIPT = [
   { gen:'boost' },
 
   // ── обратно на карту: уровень, потом наезд камеры на деда ──
-  { level:true },
+  { level:2 },
   { who:'granny', text:'А вот и Дядь Вася — на запах пришёл. Ему чёрный, без ваших молок',
     focus:'oldman', showOldman:true },
   { who:'grandson', text:'Зёрна есть, а варить негде. Ставим кофейню' },
@@ -987,7 +1034,19 @@ const SCRIPT = [
   { who:'grandson', text:'Вот она. Берём',
     pointAt:'[data-item="coffee"]', wait:'placing' },
   { hint:'Перетащи здание, куда поставить, и жми «Построить»', wait:'built' },
-  { who:'grandson', text:'Дядь Васе — американо, себе — латте на безлактозном. Вот теперь вайб' },
+
+  // ── кофейня: то же самое, но варим из зёрен американо ──
+  { who:'grandson', text:'Скорее варим! Дядь Вася уже не может без кофе' },
+  { pointAt:'.plot[data-item="coffee"]', wait:'cafeOpened' },
+  { gen:'seed',  say:'Ставим зёрна вариться — заполняй все места' },
+  { gen:'boost', say:'Опять ждать? Ускоряй, американо будет сразу' },
+  { level:3 },
+
+  // ── куда идти дальше: доска заказов ──
+  { who:'grandson', text:'Наша задача в деревне — выполнять заказы жителей, от этого зависит вся ферма',
+    spawn:'orders', focus:'orders' },
+  { who:'grandson', text:'Кофе есть, давай сделаем заказ',
+    pointAt:'.plot[data-id="orders"]', wait:'ordersOpened' },
 ];
 
 let sc = -1, scWait = null, shownAt = 0, lastWho = null;
@@ -1025,8 +1084,9 @@ function scNext(){
   // Считаем до ранних выходов: на шагах генератора и уровня ловушка не нужна
   tapcatch.classList.toggle('on', !!(st.text && !st.wait));
 
-  if(st.gen){ story.classList.remove('on'); return genStep(st.gen); }
-  if(st.level){ story.classList.remove('on'); return showLevel(); }
+  if(st.spawn) spawnBuilding(st.spawn);
+  if(st.gen){ story.classList.remove('on'); return genStep(st.gen, st.say); }
+  if(st.level){ story.classList.remove('on'); return showLevel(st.level); }
 
   // поверх каталога показываем компактный бабл: персонаж в полный рост
   // закрыл бы карточки, в макете там аватар сверху
@@ -1099,10 +1159,22 @@ tapcatch.addEventListener('click', tryAdvance);
 
 /* Цель ставим не в центр экрана, а в центр свободного места над сюжетной
    панелью: иначе здание оказывается ровно под персонажем и репликой. */
+/* «generator» и «orders» стоят под своими id, кофейню ищем по типу здания:
+   её ставит человек, и id у неё случайный */
+function plotOf(what){
+  if(what === 'generator') return built.find(b => b.id === 'gen');
+  if(what === 'cafe')      return built.find(b => b.itemId === 'coffee');
+  return built.find(b => b.id === what);
+}
+
+/* Здания наводим по их записи на карте, а не по вписанным числам:
+   кофейню человек ставит сам, и заранее её координат никто не знает.
+   Целимся чуть выше основания — иначе в кадр лезет только фундамент. */
 function focusOn(what){
-  // генератор наводим по его записи на карте, чтобы точка была одна на всех
-  const gp = built.find(b => b.id === 'gen');
-  const target = what === 'generator' ? {x:gp.x, y:gp.y - 60} : {x:470, y:660};
+  const spot = what === 'oldman' ? { x:470, y:690 }
+             : plotOf(what);
+  if(!spot) return;
+  const target = what === 'oldman' ? spot : { x:spot.x, y:spot.y - 60 };
   const busy = story.classList.contains('on') ? story.offsetHeight : 0;
   const cy = Math.max(innerHeight * .3, (innerHeight - busy) / 2);
   tweenCamera({ s:1.35, cx:target.x, cy:target.y, sx:innerWidth/2, sy:cy });
@@ -1165,12 +1237,12 @@ function hidePoint(){ pointSel = null; cancelAnimationFrame(pointRaf); point.cla
 
 /* ─── сценарий внутри генератора ─── */
 
-function genStep(kind){
+function genStep(kind, say){
   if(kind === 'seed'){
-    genBubble('Тащи зерно на грядки — сажай во все сразу', true);
+    genBubble(say || 'Тащи зерно на грядки — сажай во все сразу', true);
     genWait = 'allSeeded';
   } else if(kind === 'boost'){
-    genBubble('Ждать неохота? Ускорь — зёрна поспеют сразу', false);
+    genBubble(say || 'Ждать неохота? Ускорь — поспеет сразу', false);
     showBoostTip();
     genWait = 'boosted';
   }
@@ -1196,7 +1268,7 @@ let genWait = null, reseedTimer = null, boostTimer = null;
 function genBubble(text, withDemo){
   genSpeech.querySelector('img').src = '../assets/onboarding/avatar maloy-mini.png';
   genSpeech.querySelector('.b').textContent = text;
-  const grid = document.querySelector('#app .block');
+  const grid = document.querySelector(genHost + ' .block');
   if(grid) genSpeech.style.top = Math.max(96, grid.getBoundingClientRect().top - 130) + 'px';
   genSpeech.classList.add('on');
   if(withDemo) drawGenDemo(); else genDemo.classList.remove('on');
@@ -1209,8 +1281,8 @@ function hideGenHint(){
 
 /* зерно едет от лотка через весь ряд — путь невидимый, виден только жест */
 function drawGenDemo(){
-  const cells = [...document.querySelectorAll('#app .cell')];
-  const src = document.querySelector('#app .seed:not(.locked)');
+  const cells = [...document.querySelectorAll(genHost + ' .cell')];
+  const src = document.querySelector(genHost + ' .seed:not(.locked)');
   if(!src || !cells.length) return;
   const rs = src.getBoundingClientRect();
   const f = cells[0].getBoundingClientRect();
@@ -1219,18 +1291,21 @@ function drawGenDemo(){
   const y = f.top + f.height/2;
   const x1 = f.left + f.width/2, x2 = l.left + l.width/2;
   const d = `M ${x0} ${y0} C ${x0-60} ${y0-120}, ${x1-60} ${y+120}, ${x1} ${y} L ${x2} ${y}`;
+  // тащим то, что реально лежит в лотке: в генераторе зерно, в кофейне чашку
+  const icon = src.querySelector('img')?.src || '../assets/imgcoffe.png';
   genDemo.innerHTML = `<div class="runner" style="offset-path:path('${d}')">
-      <img src="../assets/imgcoffe.png" alt=""></div>`;
+      <img src="${icon}" alt=""></div>`;
   genDemo.classList.add('on');
 }
 
 /* подсказка уходит, только когда реально взяли зерно из лотка */
-document.getElementById('app').addEventListener('pointerdown', e => {
+// слушаем весь экран здания: грядок теперь двое — генератор и кофейня
+screen.addEventListener('pointerdown', e => {
   if(genWait && e.target.closest('.seed:not(.locked)')) hideGenHint();
 });
 
 function showBoostTip(){
-  const cells = [...document.querySelectorAll('#app .cell')];
+  const cells = [...document.querySelectorAll(genHost + ' .cell')];
   const mid = cells[Math.floor(cells.length/2)];
   if(!mid) return;
   const r = mid.getBoundingClientRect();
@@ -1246,7 +1321,7 @@ function tickBoost(){
   clearInterval(boostTimer);
   const time = boostTip.querySelector('.time');
   const draw = () => {
-    const ends = gen0.cells().filter(c => c.state === 'growing').map(c => c.endsAt);
+    const ends = activeGen.cells().filter(c => c.state === 'growing').map(c => c.endsAt);
     const left = ends.length ? Math.ceil((Math.max(...ends) - Date.now())/1000) : 0;
     time.textContent = left > 0 ? `🕐 ещё ${left} сек` : '🕐 готово';
     if(left <= 0) clearInterval(boostTimer);
@@ -1263,8 +1338,8 @@ boostTip.querySelector('.boost').addEventListener('click', () => {
   clearInterval(boostTimer);
   hideGenHint();
   flyAwayBeans();
-  const cells = [...document.querySelectorAll('#app .cell')];
-  gen.setCells(cells.map((_, i) => ({ index:i, state:'empty' })));
+  const cells = [...document.querySelectorAll(genHost + ' .cell')];
+  activeGen.setCells(cells.map((_, i) => ({ index:i, state:'empty' })));
   genWait = null;
   // зёрна долетают (последнее стартует с задержкой), затем закрываем экран
   setTimeout(() => {
@@ -1273,10 +1348,11 @@ boostTip.querySelector('.boost').addEventListener('click', () => {
   }, 620);
 });
 
-/* зёрна улетают вверх-вправо за экран, а не просто исчезают */
+/* урожай улетает вверх-вправо за экран, а не просто исчезает:
+   в генераторе это зёрна, в кофейне — готовый американо */
 function flyAwayBeans(){
   // берём координаты ячейки, а не картинки внутри: у неё размер может быть нулевым
-  document.querySelectorAll('#app .cell').forEach((cell, i) => {
+  document.querySelectorAll(genHost + ' .cell').forEach((cell, i) => {
     const img = cell.querySelector('img');
     if(!img || img.hidden) return;
     const r = cell.getBoundingClientRect();
@@ -1292,11 +1368,38 @@ function flyAwayBeans(){
   });
 }
 
-/* уровень показываем уже на карте — генератор к этому моменту закрыт */
-function showLevel(){
+/* Что открывается на каждом уровне. Второй даёт кофейню и американо,
+   третий — доску заказов: ровно то, к чему сюжет ведёт дальше. */
+const LEVELS = {
+  2: ['<img src="../assets/map/Cafe.png" alt="">', '☕'],
+  3: ['<img src="../assets/map/building-order board.png" alt="">', '📦'],
+};
+
+/* уровень показываем уже на карте — экран здания к этому моменту закрыт */
+function showLevel(n){
   hideGenHint();
+  levelBox.querySelector('.medal span').textContent = n;
+  levelBox.querySelector('.items').innerHTML =
+    (LEVELS[n] || []).map(h => `<div>${h}</div>`).join('');
   levelBox.classList.add('on');
   setTimeout(confetti, 420);        // сыплется под самый выезд медали
+}
+
+/* Здание, которое даёт сам сюжет: доску заказов не покупают, её открывает
+   третий уровень. Места подобраны по карте — там сплошная трава под всё
+   основание. Берём первое, куда человек не поставил свою постройку. */
+const SPAWNS = {
+  orders:{ itemId:'orders', spots:[[711,956],[628,1000],[753,978],[586,1022]] },
+};
+
+function spawnBuilding(kind){
+  if(built.some(b => b.id === kind)) return;
+  const cfg = SPAWNS[kind];
+  const free = cfg.spots.find(([x,y]) =>
+    !built.some(b => Math.abs(b.x - x) < 120 && Math.abs(b.y - y) < 70)) || cfg.spots[0];
+  built.push({ id:kind, itemId:cfg.itemId, state:'ready', order:true, x:free[0], y:free[1] });
+  paintAll(kind);
+  save();
 }
 
 // забрал награду — экран уходит, и только потом камера едет к деду.
@@ -1310,15 +1413,17 @@ levelBox.addEventListener('click', e => {
 /* засеял весь ряд — сразу тултип ускорения, ждать не заставляем.
    Засеял не всё и отпустил — подсказку возвращаем: раньше она пропадала
    при первом же касании лотка и человек оставался без объяснений. */
-gen0.on('change', st => {
+function onCellsChanged(st){
   if(genWait !== 'allSeeded') return;
   if(st.empty === 0){ genWait = null; return scNext(); }
   clearTimeout(reseedTimer);
   reseedTimer = setTimeout(() => {
-    if(genWait === 'allSeeded' && gen0.stats().empty > 0)
-      genBubble(`Осталось засеять ещё ${gen0.stats().empty}`, true);
+    const left = activeGen.stats().empty;
+    if(genWait === 'allSeeded' && left > 0) genBubble(`Осталось засеять ещё ${left}`, true);
   }, 700);
-});
+}
+gen0.on('change', onCellsChanged);
+cafeGen.on('change', onCellsChanged);
 
 /* прототип всегда стартует с начала истории — и мир вместе с ней */
 resetWorld();

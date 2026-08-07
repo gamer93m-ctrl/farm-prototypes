@@ -11,6 +11,8 @@
      version,  'tool' | 'direct' | 'select'
      mode,     'single' | 'overflow'
      cells,    сколько ячеек в блоке (по умолчанию 25 — сетка 5×5)
+     types,    свой набор ресурсов вместо стандартного
+     title,    заголовок экрана (по умолчанию «Генератор»)
      chrome    false — спрятать служебную кнопку версий
      back      false — спрятать «‹»: у хоста своя
    }) → API
@@ -143,7 +145,9 @@ window.createGenerator = function createGenerator(host, opts = {}){
 
 /* ═══════════ КОНФИГ ═══════════ */
 
-const RESOURCE_TYPES = [
+/* Набор ресурсов можно подменить: кофейня переваривает зёрна в американо,
+   и ей нужен свой лоток, а не грядки из генератора. */
+const RESOURCE_TYPES = opts.types || [
   { id:'strawberry', name:'Клубника', growMs:10*1000, image: ASSETS + '/img.png' },
   { id:'banana',     name:'Банан',    growMs:20*1000, image: ASSETS + '/imgb.png' },
   { id:'coffee',     name:'Кофе',     growMs:40*1000, image: ASSETS + '/imgcoffe.png' },
@@ -974,6 +978,7 @@ function render(){
   // встраиваемому генератору своя «‹» не нужна: у хоста она уже есть,
   // и две стрелки наезжали друг на друга в углу
   if(opts.back === false) $('#back').style.display = 'none';
+  if(opts.title) $('#title').textContent = opts.title;
   if(opts.dim) $('#phone').classList.add('dim');
 
   render();
