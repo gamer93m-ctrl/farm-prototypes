@@ -27,20 +27,23 @@
     width:12px;height:12px;border-radius:50%;background:#fff}
 
   .plot{position:absolute;transform:translate(-50%,-50%);width:150px;height:150px}
-  .pad{position:absolute;left:50%;top:50%;width:140px;height:78px;
-    transform:translate(-50%,-50%) rotate(45deg) scaleY(.58);border-radius:6px;transition:.15s}
-  .art{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);pointer-events:none}
+  /* Метка места — ромб ровно в два тайла карты, а не повёрнутый квадрат:
+     размеры взяты с самой картинки (тайл 83.6×44.1). Центр ромба совпадает
+     с точкой привязки, поэтому здание стоит на нём, а не рядом. */
+  .pad{position:absolute;left:50%;top:50%;width:167px;height:88px;
+    transform:translate(-50%,-50%);opacity:0;transition:opacity .15s;
+    clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:rgba(130,255,160,.95)}
+  .pad::after{content:"";position:absolute;inset:0;clip-path:inherit;transform:scale(.88);
+    background:rgba(40,150,80,.5)}
+  .art{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);pointer-events:none}
   .art img{display:block;width:150px;height:auto}
 
-  /* свободная плитка видна только в режиме размещения */
-  .plot .pad{opacity:0}
-  .plot.ghost .pad{opacity:1;background:rgba(120,255,150,.55);border:0}
-  .plot.ghost .art img{opacity:.95}
+  /* метка видна только у здания, которое сейчас несут */
+  .plot.ghost .pad{opacity:1;animation:padpulse 1.3s ease-in-out infinite}
+  .plot.ghost .art img{opacity:.95;filter:drop-shadow(0 6px 14px rgba(0,0,0,.45))}
+  @keyframes padpulse{0%,100%{opacity:1}50%{opacity:.62}}
   .placeRow{display:flex;gap:10px;justify-content:space-between;width:100%}
   #dock{flex-direction:column;gap:10px}
-  body.placing .plot[data-state="free"] .pad{
-    opacity:1;background:rgba(90,230,120,.45);border:2px solid rgba(140,255,170,.9);cursor:pointer}
-  body.placing .plot[data-state="free"].pick .pad{background:rgba(120,255,150,.75)}
 
 
 
@@ -51,7 +54,8 @@
     font-size:26px;padding:0;animation:bob 1.2s ease-in-out infinite}
   @keyframes bob{0%,100%{transform:translate(-50%,-120%)}50%{transform:translate(-50%,-145%)}}
 
-  .label{position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);
+  /* подпись — сразу под основанием здания, а не в траве под ним */
+  .label{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);
     background:rgba(0,0,0,.6);border-radius:100px;padding:5px 10px;
     font:600 12px/1 inherit;white-space:nowrap}
 
@@ -305,13 +309,20 @@ const CATALOG = [
 const itemById = id => CATALOG.flatMap(c => c.items).find(i => i.id === id);
 
 /* Здания стоят где поставили: у каждого свои координаты на карте.
-   Изометрия — ромбы, поэтому позицию притягиваем к решётке ромбов. */
-const TILE_W = 92, TILE_H = 46;
+   Изометрия — ромбы, поэтому позицию притягиваем к решётке ромбов.
 
+   Константы сняты с самой картинки, а не на глаз: линии сетки идут с
+   наклоном 0.528 и шагом 44.1, то есть тайл 83.6×44.1. Фазы PU/PV
+   ставят решётку на нарисованные линии — иначе здание вставало между
+   ромбами и метка места выглядела случайной. */
+const ISO_S = 0.528, ISO_P = 44.12, ISO_PU = 6.56, ISO_PV = 7.42;
+
+/* Притягиваем к вершине решётки: метка занимает два тайла в каждую
+   сторону, и на вершине она накрывает ровно четыре ромба. */
 function snapIso(x, y){
-  const a = Math.round((x / TILE_W) + (y / TILE_H));
-  const b = Math.round((y / TILE_H) - (x / TILE_W));
-  return { x: (a - b) / 2 * TILE_W, y: (a + b) / 2 * TILE_H };
+  const u = ISO_PU + ISO_P * Math.round(((y - ISO_S*x) - ISO_PU) / ISO_P);
+  const v = ISO_PV + ISO_P * Math.round(((y + ISO_S*x) - ISO_PV) / ISO_P);
+  return { x: (v - u) / (2*ISO_S), y: (u + v) / 2 };
 }
 
 const KEY = 'farm-map-v2';
@@ -329,9 +340,11 @@ function load(){
       seq = r.seq || 1;
     }
   }catch{}
-  // генератор нарисован на самой карте — запись нужна только чтобы по нему тапали
+  // генератор нарисован на самой карте — запись нужна только чтобы по нему тапали.
+  // Точка привязки — центр его каменной площадки, снятый с картинки: тогда
+  // подпись и метка места ложатся так же, как у построенных зданий
   if(!built.some(b => b.id === 'gen'))
-    built.unshift({ id:'gen', itemId:'gen', state:'ready', x:285, y:880 });
+    built.unshift({ id:'gen', itemId:'gen', state:'ready', x:293, y:956 });
 }
 load();
 
@@ -858,7 +871,9 @@ story.addEventListener('click', () => {
 /* Цель ставим не в центр экрана, а в центр свободного места над сюжетной
    панелью: иначе здание оказывается ровно под персонажем и репликой. */
 function focusOn(what){
-  const target = what === 'generator' ? {x:285, y:880} : {x:470, y:660};
+  // генератор наводим по его записи на карте, чтобы точка была одна на всех
+  const gp = built.find(b => b.id === 'gen');
+  const target = what === 'generator' ? {x:gp.x, y:gp.y - 60} : {x:470, y:660};
   const z = 1.35;
   const busy = story.classList.contains('on') ? story.offsetHeight : 0;
   const cy = Math.max(innerHeight * .3, (innerHeight - busy) / 2);
