@@ -258,6 +258,65 @@
   #boostTip .nose{position:absolute;left:50%;top:-7px;transform:translateX(-50%) rotate(45deg);
     width:14px;height:14px;background:#428bf9;border-radius:3px}
 
+  /* ─── экран заказов ─── */
+  /* Собран руками, а не модулем генератора: механики грядок тут нет,
+     есть карточка заказа. Обвязка повторяет остальные экраны зданий. */
+  /* снизу оставлено место под подсказку со стрелкой — иначе бабл ложится
+     ровно на кнопку отправки */
+  #orders{--shift:scale(.96);position:fixed;inset:0;z-index:52;background:#000;
+    display:flex;flex-direction:column;padding:44px 16px 132px}
+  #orders .back{position:absolute;left:8px;top:44px;border:0;background:none;
+    color:#0a84ff;font:300 26px/24px inherit;padding:8px}
+  #orders .obar{display:flex;justify-content:flex-end;gap:10px;height:28px}
+  #orders .badge{height:28px;border-radius:100px;background:#1c1c1e;display:flex;align-items:center;
+    gap:6px;padding:0 10px;font:600 13px/1 inherit;color:rgba(255,255,255,.45)}
+  #orders .badge i{width:16px;height:16px;border-radius:50%;display:block}
+  #orders .badge.ring{border:2px solid rgba(66,139,249,.5);background:none}
+  #orders h2{margin:22px 0 0;font-size:30px;font-weight:700;color:rgba(255,255,255,.32);
+    display:flex;align-items:center;gap:10px}
+  #orders h2 .info{width:24px;height:24px;border-radius:50%;background:#2c2c2e;color:#fff;
+    font:700 13px/24px inherit;text-align:center;font-style:normal}
+
+  /* заказчики */
+  #orders .clients{display:flex;gap:12px;margin-top:20px}
+  #orders .client{position:relative;width:84px;height:84px;border-radius:50%;padding:0;
+    border:3px solid transparent;background:#1c1c1e;overflow:visible}
+  #orders .client.on{border-color:#ffd60a}
+  #orders .client img{width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:50% 12%;
+    display:block}
+  #orders .client .ok{position:absolute;right:-2px;top:-2px;width:26px;height:26px;border-radius:50%;
+    background:#30d158;color:#fff;font:700 14px/26px inherit;text-align:center}
+
+  /* карточка заказа */
+  #orders .card{position:relative;margin-top:14px;background:#1c1c1e;border-radius:22px;
+    padding:18px 16px 16px;display:flex;flex-direction:column;flex:1;min-height:0}
+  #orders .card::before{content:"";position:absolute;left:38px;top:-8px;width:18px;height:18px;
+    background:#1c1c1e;transform:rotate(45deg);border-radius:4px}
+  #orders .chead{position:relative;text-align:center;font-size:19px;font-weight:700}
+  #orders .reroll{position:absolute;right:0;top:-4px;width:38px;height:38px;border-radius:50%;
+    border:0;background:#2c2c2e;color:#0a84ff;font-size:19px}
+  #orders .need{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:16px;
+    font-size:15px;font-weight:600}
+  #orders .slot{position:relative;width:78px;height:78px;border-radius:16px;background:#2c2c2e;
+    display:grid;place-items:center}
+  #orders .slot img{width:56px;height:56px;object-fit:contain}
+  #orders .slot .ok{position:absolute;right:-6px;top:-6px;width:26px;height:26px;border-radius:50%;
+    background:#30d158;color:#fff;font:700 14px/26px inherit;text-align:center}
+  #orders .rewtitle{margin-top:auto;display:flex;align-items:center;gap:12px;
+    color:#8e8e93;font-size:14px}
+  #orders .rewtitle span{flex:1;height:1px;background:rgba(255,255,255,.14)}
+  #orders .rewards{display:flex;justify-content:center;gap:12px;margin-top:12px}
+  #orders .rewards b{display:inline-flex;align-items:center;gap:8px;background:#2c2c2e;
+    border-radius:100px;padding:9px 16px;font-size:16px;font-weight:700}
+  #orders .rewards i{width:20px;height:20px;border-radius:50%;display:block}
+  #orders .send{margin-top:18px;width:100%;background:#ffd60a;color:#000;border:0;border-radius:14px;
+    padding:17px;font:600 17px/1 inherit}
+  #orders .send:active{transform:scale(.99)}
+
+  /* награда улетает в счётчики наверху */
+  .fly{position:fixed;z-index:95;pointer-events:none;width:26px;height:26px;border-radius:50%;
+    transition:transform .75s cubic-bezier(.4,0,.7,1), opacity .75s ease}
+
   /* ─── экран нового уровня ─── */
   /* Появляется не разом: сперва подложка, потом медаль, потом строчки —
      иначе это читается как вырубленный свет, а не как награда. */
@@ -429,6 +488,35 @@
       <li><span>3</span>Финальная цель: выполнить заказ</li>
     </ol>
     <button class="go">Поехали</button>
+  </div>
+
+  <div id="orders" class="veil">
+    <button class="back" aria-label="Назад">‹</button>
+    <div class="obar">
+      <span class="badge"><i class="i-gem"></i>500</span>
+      <span class="badge"><i class="i-coin"></i>5 000</span>
+      <span class="badge ring">10</span>
+    </div>
+    <h2>Заказы <i class="info">i</i></h2>
+
+    <div class="clients">
+      <button class="client on"><img src="../assets/onboarding/Granny.png" alt=""><span class="ok">✓</span></button>
+      <button class="client"><img src="../assets/onboarding/oldman and cofe.png" alt=""></button>
+    </div>
+
+    <div class="card">
+      <div class="chead">Детали<button class="reroll" aria-label="Другой заказ">⟳</button></div>
+      <div class="need">
+        <div class="slot"><img alt=""><span class="ok">✓</span></div>
+        <b>5/1</b>
+      </div>
+      <div class="rewtitle"><span></span>Награда за выполнение<span></span></div>
+      <div class="rewards">
+        <b><i class="i-coin"></i>93</b>
+        <b><i class="i-gem"></i>236</b>
+      </div>
+      <button class="send">Отправить заказ</button>
+    </div>
   </div>
 
   <div id="level">
@@ -703,7 +791,7 @@ canvas.addEventListener('click', e => {
   const item = itemById(b.itemId);
   if(item.opens === 'generator') return openBuilding('generator');
   if(item.opens === 'cafe')      return openBuilding('cafe');
-  if(item.opens === 'orders')    return scFire('ordersOpened'), say('Экран заказа — следующий шаг прототипа');
+  if(item.opens === 'orders')    return openOrders();
   say(`${item.name}: экран пока не сделан`);
 });
 
@@ -981,9 +1069,66 @@ const openGenerator = () => openBuilding('generator');
 /* закрываем всё, что живёт поверх экрана здания, одним местом */
 function closeGenerator(){
   screen.classList.remove('on');
+  ordersBox.classList.remove('on');
   clearInterval(boostTimer);
   boostTip.classList.remove('on');
   hideGenHint();
+}
+
+/* ═══════════ ЭКРАН ЗАКАЗОВ ═══════════
+   Устроен как остальные экраны зданий: открывается по тапу, закрывается
+   той же «‹», а после отправки заказа уходит сам — ровно как генератор
+   после ускорения. */
+
+const ordersBox = document.getElementById('orders');
+ordersBox.querySelector('.slot img').src = CUP;
+
+function openOrders(){
+  ordersBox.classList.add('on');
+  scFire('ordersOpened');
+}
+
+ordersBox.querySelector('.back').addEventListener('click', () => {
+  ordersBox.classList.remove('on');
+  hideGenHint();
+  // вышел посреди обучения — зовём обратно, как и в других зданиях
+  if(SCRIPT[sc]?.orders){
+    sc = SCRIPT.findIndex(s => s.wait === 'ordersOpened') - 1;
+    scNext();
+  }
+});
+
+/* Награда летит в счётчики наверху — те же, что в шапке карты.
+   Дальше экран закрывается и приходит новый уровень. */
+ordersBox.querySelector('.send').addEventListener('click', () => {
+  hideGenHint();
+  hidePoint();
+  const targets = [...ordersBox.querySelectorAll('.obar .badge i')];
+  ordersBox.querySelectorAll('.rewards i').forEach((from, k) => {
+    for(let n = 0; n < 4; n++) flyReward(from, targets[k === 0 ? 1 : 0], n * 90);
+  });
+  ordersBox.querySelector('.send').disabled = true;
+  setTimeout(() => {
+    ordersBox.classList.remove('on');
+    ordersBox.querySelector('.send').disabled = false;
+    setTimeout(scNext, 380);
+  }, 900);
+});
+
+function flyReward(from, to, delay){
+  const a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
+  const el = document.createElement('span');
+  el.className = 'fly';
+  el.style.background = getComputedStyle(from).background;
+  el.style.left = a.left + 'px';
+  el.style.top  = a.top + 'px';
+  el.style.transitionDelay = delay + 'ms';
+  document.body.appendChild(el);
+  requestAnimationFrame(() => {
+    el.style.transform = `translate(${b.left - a.left}px, ${b.top - a.top}px) scale(.6)`;
+    el.style.opacity = '.1';
+  });
+  setTimeout(() => el.remove(), 1200 + delay);
 }
 
 /* Выход из генератора посреди обучения возвращал на карту без реплик и
@@ -1102,6 +1247,11 @@ const SCRIPT = [
     spawn:'orders', focus:'orders' },
   { who:'grandson', text:'Кофе есть, давай сделаем заказ',
     pointAt:'.plot[data-id="orders"]', wait:'ordersOpened' },
+
+  // ── сам заказ: отправили, награда улетела в счётчики, новый уровень ──
+  { orders:'send', say:'Американо готов — отправляем заказ' },
+  { level:4 },
+  { who:'grandson', text:'Заказ ушёл! Дядь Вася с американо, я с латте — вот теперь в деревне вайб' },
 ];
 
 let sc = -1, scWait = null, shownAt = 0, lastWho = null;
@@ -1140,6 +1290,7 @@ function scNext(){
   tapcatch.classList.toggle('on', !!(st.text && !st.wait));
 
   if(st.spawn) spawnBuilding(st.spawn);
+  if(st.orders){ story.classList.remove('on'); return ordersStep(st.say); }
   if(st.gen){ story.classList.remove('on'); return genStep(st.gen, st.say); }
   if(st.level){ story.classList.remove('on'); return showLevel(st.level); }
 
@@ -1292,6 +1443,18 @@ function hidePoint(){ pointSel = null; cancelAnimationFrame(pointRaf); point.cla
 
 /* ─── сценарий внутри генератора ─── */
 
+/* подсказка на экране заказов: бабл внизу, стрелка на кнопку отправки */
+function ordersStep(say){
+  genSpeech.querySelector('img').src = '../assets/onboarding/avatar maloy-mini.png';
+  genSpeech.querySelector('.b').textContent = say || 'Отправляем заказ';
+  genSpeech.classList.add('on');
+  // под карточкой, ниже стрелки на кнопку
+  const card = ordersBox.querySelector('.card').getBoundingClientRect();
+  genSpeech.style.top = Math.min(card.bottom + 56, innerHeight - genSpeech.offsetHeight - 12) + 'px';
+  genDemo.classList.remove('on');
+  setTimeout(() => pointTo('#orders .send'), 120);
+}
+
 function genStep(kind, say){
   if(kind === 'seed'){
     genBubble(say || 'Тащи зерно на грядки — сажай во все сразу', true);
@@ -1437,6 +1600,8 @@ function flyAwayBeans(){
 const LEVELS = {
   2: ['<img src="../assets/map/Cafe.png" alt="">', '☕'],
   3: ['<img src="../assets/map/building-order board.png" alt="">', '📦'],
+  4: ['<img src="../assets/map/building-barn.png" alt="">',
+      '<img src="../assets/map/building-generator.png" alt="">'],
 };
 
 /* уровень показываем уже на карте — экран здания к этому моменту закрыт */
