@@ -16,8 +16,9 @@
   #canvas{position:absolute;left:0;top:0;width:922px;height:1200px;transform-origin:0 0}
   #canvas img.base{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 
-  /* дед стоит на карте и хочет кофе */
-  #oldman{position:absolute;left:470px;top:660px;transform:translate(-50%,-50%);width:130px;
+  /* Дед стоит на карте и хочет кофе. Размер человеческий: здание занимает
+     четыре тайла, дед — меньше одного в ширину, иначе он ростом с дом. */
+  #oldman{position:absolute;left:470px;top:690px;transform:translate(-50%,-50%);width:78px;
     pointer-events:none;display:block;visibility:hidden;opacity:0}
   /* дед приходит, а не возникает: подрастает снизу */
   #oldman.on{visibility:visible;animation:oldmanin .55s var(--ease) forwards}
@@ -25,22 +26,29 @@
     from{opacity:0;transform:translate(-50%,-38%) scale(.86)}
     to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
   #oldman img{width:100%;display:block;filter:drop-shadow(0 8px 16px rgba(0,0,0,.45))}
-  #oldman .want{position:absolute;left:50%;top:-64px;transform:translateX(-50%);
-    width:74px;height:74px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:36px}
-  #oldman .want::after{content:"";position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);
-    width:12px;height:12px;border-radius:50%;background:#fff}
+  /* облачко по деду, а не по экрану: было больше его головы */
+  #oldman .want{position:absolute;left:50%;top:-42px;transform:translateX(-50%);
+    width:46px;height:46px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:23px}
+  #oldman .want::after{content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
+    width:8px;height:8px;border-radius:50%;background:#fff}
 
-  .plot{position:absolute;transform:translate(-50%,-50%);width:150px;height:150px}
-  /* Метка места — ромб ровно в два тайла карты, а не повёрнутый квадрат:
-     размеры взяты с самой картинки (тайл 83.6×44.1). Центр ромба совпадает
+  /* Плитка — просто точка на карте: ширину и высоту задаёт сам спрайт,
+     иначе крупные здания не попадали в свою же зону нажатия. */
+  .plot{position:absolute;width:0;height:0}
+  /* Метка места — ромб ровно в четыре тайла карты, как основание у зданий,
+     нарисованных на самой карте (тайл 83.6×44.1). Центр ромба совпадает
      с точкой привязки, поэтому здание стоит на нём, а не рядом. */
-  .pad{position:absolute;left:50%;top:50%;width:167px;height:88px;
+  .pad{position:absolute;left:0;top:0;width:334px;height:176px;
     transform:translate(-50%,-50%);opacity:0;transition:opacity .15s;
     clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:rgba(130,255,160,.95)}
-  .pad::after{content:"";position:absolute;inset:0;clip-path:inherit;transform:scale(.88);
+  .pad::after{content:"";position:absolute;inset:0;clip-path:inherit;transform:scale(.9);
     background:rgba(40,150,80,.5)}
-  .art{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);pointer-events:none}
-  .art img{display:block;width:150px;height:auto}
+  /* ширину и сдвиг вниз ставит отрисовка: у каждой картинки своё основание */
+  .art{position:absolute;left:0;transform:translateX(-50%)}
+  .art img{display:block;width:100%;height:auto}
+  .plot.ghost .art{pointer-events:none}
+  /* невидимая зона нажатия для здания без картинки */
+  .hit{position:absolute;left:0;top:0;transform:translate(-50%,-50%)}
 
   /* только что поставленное здание встаёт с отскоком */
   .plot.pop .art{animation:plotpop .5s cubic-bezier(.34,1.5,.64,1) both}
@@ -56,17 +64,19 @@
 
 
 
-  .chip{position:absolute;left:50%;top:0;transform:translate(-50%,-120%);
+  /* чип живёт внутри картинки здания, чтобы висеть над его крышей,
+     а не над точкой привязки: у высоких зданий он оказывался внутри стены */
+  .chip{position:absolute;left:50%;top:-10px;transform:translate(-50%,-100%);
     background:#fff;color:#000;border-radius:100px;padding:6px 12px;font:600 13px/1 inherit;white-space:nowrap;
     box-shadow:0 4px 12px rgba(0,0,0,.3)}
   .chip.unlock{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;
     font-size:26px;padding:0;animation:bob 1.2s ease-in-out infinite}
-  @keyframes bob{0%,100%{transform:translate(-50%,-120%)}50%{transform:translate(-50%,-145%)}}
+  @keyframes bob{0%,100%{transform:translate(-50%,-100%)}50%{transform:translate(-50%,-125%)}}
 
-  /* подпись — сразу под основанием здания, а не в траве под ним */
-  .label{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);
+  /* подпись — сразу под основанием, ромб основания кончается на 88px ниже точки */
+  .label{position:absolute;left:0;top:96px;transform:translateX(-50%);
     background:rgba(0,0,0,.6);border-radius:100px;padding:5px 10px;
-    font:600 12px/1 inherit;white-space:nowrap}
+    font:600 12px/1 inherit;white-space:nowrap;pointer-events:none}
 
   /* ─── шапка ─── */
   #bar{position:fixed;left:0;right:0;top:0;z-index:20;display:flex;align-items:center;gap:8px;
@@ -146,6 +156,36 @@
     0%{transform:translate(0,0) rotate(0);opacity:1}
     100%{transform:translate(var(--dx),110vh) rotate(720deg);opacity:0}
   }
+
+  /* ─── превью перед онбордингом ─── */
+  /* Человек на тесте видит его первым: коротко — что за игра, что он
+     сейчас сделает и сколько это займёт. Длинный текст тут не читают. */
+  #intro{--shift:scale(.97);position:fixed;inset:0;z-index:85;display:flex;flex-direction:column;
+    align-items:center;text-align:center;padding:52px 22px 30px;
+    background:radial-gradient(120% 65% at 50% 14%,#243252 0%,#0a0a0f 60%,#000 100%)}
+  #intro .hero{width:186px;height:186px;object-fit:contain;flex:0 0 auto;
+    filter:drop-shadow(0 18px 40px rgba(255,214,10,.28))}
+  #intro .logo{margin-top:6px;font-size:36px;font-weight:700;letter-spacing:-.6px}
+  #intro .logo b{color:#ffd60a}
+  #intro .lead{margin-top:10px;color:#a5a5ad;font-size:16px;line-height:1.35;max-width:300px}
+  #intro ol{list-style:none;margin:26px 0 0;padding:0;display:flex;flex-direction:column;gap:10px;
+    width:100%;max-width:330px;text-align:left}
+  #intro li{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.07);
+    border-radius:14px;padding:13px 15px;font-size:15px;font-weight:500}
+  #intro li span{width:26px;height:26px;flex:0 0 auto;border-radius:50%;background:#ffd60a;color:#000;
+    font:700 13px/26px inherit;text-align:center}
+  #intro .note{margin-top:20px;color:#6f6f78;font-size:13px;line-height:1.4;max-width:300px}
+  #intro .go{margin-top:auto;width:100%;background:#ffd60a;color:#000;border:0;border-radius:14px;
+    padding:17px;font:600 17px/1 inherit}
+  #intro .go:active{transform:scale(.98)}
+  #intro.on .hero{animation:medalpop .6s cubic-bezier(.34,1.5,.64,1) both}
+  #intro.on .logo{animation:lvlrise .45s var(--ease) .1s both}
+  #intro.on .lead{animation:lvlrise .45s var(--ease) .16s both}
+  #intro.on li:nth-child(1){animation:lvlrise .45s var(--ease) .24s both}
+  #intro.on li:nth-child(2){animation:lvlrise .45s var(--ease) .3s both}
+  #intro.on li:nth-child(3){animation:lvlrise .45s var(--ease) .36s both}
+  #intro.on .note{animation:lvlrise .45s var(--ease) .42s both}
+  #intro.on .go{animation:lvlrise .45s var(--ease) .48s both}
 
   /* ─── экран здания ─── */
   #screen{--shift:scale(.96);position:fixed;inset:0;z-index:50;background:#000;display:block}
@@ -336,6 +376,19 @@
     </div>
   </div>
 
+  <div id="intro" class="veil">
+    <img class="hero" src="../assets/map/Cafe.png" alt="">
+    <div class="logo">Т<b>-</b>Ферма</div>
+    <p class="lead">Ферма, где всё нужное растишь и строишь сам. Начинаем с кофе.</p>
+    <ol>
+      <li><span>1</span>Вырастить кофейные зёрна в генераторе</li>
+      <li><span>2</span>Собрать урожай, не дожидаясь таймера</li>
+      <li><span>3</span>Построить на карте кофейню</li>
+    </ol>
+    <p class="note">Пара минут. Бабуся с внуком подскажут по ходу — просто идите за стрелкой.</p>
+    <button class="go">Поехали</button>
+  </div>
+
   <div id="level">
     <div class="medal"><span>2</span></div>
     <h2>Уровень 2</h2>
@@ -357,7 +410,10 @@ const BUILD_MS = 3000;                 // стройка идёт 3 секунд
 
 const CATALOG = [
   { cat:'Преобразователи', icon:'../assets/map/Cafe.png', items:[
-      { id:'gen', name:'Генератор', price:0, opens:'generator', art:'', hidden:true },
+      // генератор нарисован на самой карте: картинки нет, поэтому зону
+      // нажатия задаём вручную — по размеру спрайта на карте
+      { id:'gen', name:'Генератор', price:0, opens:'generator', art:'', hidden:true,
+        hit:{ w:355, h:297, dy:-35 } },
       { id:'coffee', name:'Кофейня', price:2000, opens:'generator',
         art:'../assets/map/Cafe.png',
         artBuild:'../assets/map/Cafe-construction.png',
@@ -373,6 +429,25 @@ const CATALOG = [
   ]},
 ];
 const itemById = id => CATALOG.flatMap(c => c.items).find(i => i.id === id);
+
+/* Размеры зданий сняты с самой карты: нарисованные на ней завод и генератор
+   стоят на основании в четыре тайла (334px). Кофейня рисовалась в 150px и
+   рядом с ними выглядела игрушечной.
+
+   У каждой картинки своя доля основания в общей ширине, поэтому масштаб
+   считается не по картинке целиком, а по её основанию:
+     w   — ширина отрисовки, при которой основание встаёт ровно в 4 тайла;
+     off — на сколько низ картинки опускается ниже точки привязки, чтобы
+           центр основания лёг на неё. */
+const ART_FIT = {
+  'Cafe.png':                      { w:398, off:110 },
+  'Cafe-construction.png':         { w:335, off:87  },
+  'cafe-constructionend-open.png': { w:334, off:89  },
+  'building-generator.png':        { w:334, off:90  },
+  'building-order board.png':      { w:347, off:116 },
+  'building-barn.png':             { w:381, off:106 },
+};
+const fitOf = src => ART_FIT[src.split('/').pop()] || { w:334, off:90 };
 
 /* Здания стоят где поставили: у каждого свои координаты на карте.
    Изометрия — ромбы, поэтому позицию притягиваем к решётке ромбов.
@@ -437,13 +512,19 @@ function paintAll(popId){
     const src = b.state === 'building' ? (item.artBuild || item.art)
               : b.state === 'gift'     ? (item.artGift  || item.art)
               : item.art;
+    const f = src ? fitOf(src) : null;
+    // чип висит внутри картинки — над крышей, а не над точкой привязки
+    const chip = b.state === 'building' ? '<div class="chip">🕐 …</div>'
+               : b.state === 'gift'     ? '<div class="chip unlock">🔓</div>' : '';
     el.innerHTML =
-      `<div class="pad"></div>
-       <div class="art">${src ? `<img src="${src}" alt="" style="transform:scaleX(${b.flip ? -1 : 1})">` : ''}</div>` +
-      (b.state === 'building' ? '<div class="chip">🕐 …</div>'
-       : b.state === 'gift'   ? '<div class="chip unlock">🔓</div>'
-       : b.id === 'gen'       ? `<div class="label">Генератор</div>`
-       : `<div class="label">${item.name}</div>`);
+      (f ? `<div class="pad"></div>
+            <div class="art" style="width:${f.w}px;bottom:${-f.off}px">
+              <img src="${src}" alt="" style="transform:scaleX(${b.flip ? -1 : 1})">${chip}
+            </div>`
+         : `<div class="pad"></div>
+            <div class="hit" style="width:${item.hit?.w || 334}px;height:${item.hit?.h || 176}px;
+                 margin-top:${item.hit?.dy || 0}px"></div>${chip}`) +
+      (chip ? '' : `<div class="label">${b.id === 'gen' ? 'Генератор' : item.name}</div>`);
     if(b.id === popId) el.classList.add('pop');
     canvas.appendChild(el);
   });
@@ -481,9 +562,10 @@ function startPlacing(itemId){
   const item = itemById(itemId);
   if(coins < item.price) return say('Не хватает монет');
   closeSheet();
-  // ставим в центр экрана, дальше человек двигает пальцем
-  placing = { itemId, flip:false,
-    ...snapIso((innerWidth/2 - ox) / scale, (innerHeight/2 - oy) / scale) };
+  // отъезжаем на общий план и ставим здание в середину карты —
+  // ровно туда, куда после отъезда смотрит экран
+  zoomOut();
+  placing = { itemId, flip:false, ...snapIso(MAP_W/2, MAP_H/2) };
   document.body.classList.add('placing');
   renderPlacing();
   scFire('placing');
@@ -808,8 +890,18 @@ function resetWorld(){
   genWait = null;
   lastWho = null;
   fit();
-  sc = -1; scNext();
+  // сюжет ждёт: сперва человек читает, что это за игра и что он сейчас сделает
+  sc = -1;
+  story.classList.remove('on');
+  dock.classList.add('hide');
+  intro.classList.add('on');
 }
+
+const intro = document.getElementById('intro');
+intro.querySelector('.go').addEventListener('click', () => {
+  intro.classList.remove('on');
+  setTimeout(scNext, 300);          // экран уходит, и только потом первая реплика
+});
 
 document.getElementById('reset').addEventListener('click', () => { resetWorld(); say('Начали сначала'); });
 
@@ -975,19 +1067,29 @@ function focusOn(what){
   // генератор наводим по его записи на карте, чтобы точка была одна на всех
   const gp = built.find(b => b.id === 'gen');
   const target = what === 'generator' ? {x:gp.x, y:gp.y - 60} : {x:470, y:660};
-  const z = 1.35;
   const busy = story.classList.contains('on') ? story.offsetHeight : 0;
   const cy = Math.max(innerHeight * .3, (innerHeight - busy) / 2);
+  tweenCamera({ s:1.35, cx:target.x, cy:target.y, sx:innerWidth/2, sy:cy });
+}
+
+/* Отъезд на общий план: выбирать место для здания в упор неудобно —
+   не видно ни соседей, ни свободной земли. */
+function zoomOut(){
+  tweenCamera({ s:minScale, cx:MAP_W/2, cy:MAP_H/2, sx:innerWidth/2, sy:innerHeight/2 });
+}
+
+/* точку карты (cx,cy) подводим к точке экрана (sx,sy) при масштабе s */
+function tweenCamera(to){
   const from = {s:scale, x:ox, y:oy};
-  const to = { s:z, x: innerWidth/2 - target.x*z, y: cy - target.y*z };
+  const end = { x: to.sx - to.cx*to.s, y: to.sy - to.cy*to.s };
   const t0 = performance.now();
   (function tick(now){
     const k = Math.min(1, (now - t0)/900);
     // разгон и торможение: чистый ease-out стартовал рывком
     const e = k < .5 ? 4*k*k*k : 1 - Math.pow(-2*k + 2, 3)/2;
     scale = from.s + (to.s - from.s)*e;
-    ox = from.x + (to.x - from.x)*e;
-    oy = from.y + (to.y - from.y)*e;
+    ox = from.x + (end.x - from.x)*e;
+    oy = from.y + (end.y - from.y)*e;
     apply();
     if(k < 1) requestAnimationFrame(tick);
   })(t0);
