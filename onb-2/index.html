@@ -34,7 +34,9 @@ const SCRIPT = [
     spawn:'orders', focus:'orders', pointAt:'.plot[data-id="orders"]', wait:'ordersOpened' },
 
   // первый заказ уже готов — показываем, чем всё кончается
-  { orders:'send', order:{ client:0, item:'bean', have:5, need:1 },
+  // экран не закрываем: уровень придёт прямо поверх заказа, и следующий
+  // заказчик появится здесь же — человек всё это время в одном экране
+  { orders:'send', order:{ client:0, item:'bean', have:5, need:1 }, stay:true,
     say:'Давай отправим первый готовый заказ' },
   { level:2 },
 
@@ -51,11 +53,13 @@ const SCRIPT = [
   // экран не закрылся сам: возвращаемся к доске своими руками
   { tip:'Всё, го выполнять заказ', pointAt:'#screen .back', wait:'screenClosed' },
   { focus:'orders', pointAt:'.plot[data-id="orders"]', wait:'ordersOpened' },
-  { orders:'send', order:{ client:1, item:'bean', have:5, need:2 },
+  { orders:'send', order:{ client:1, item:'bean', have:5, need:2 }, stay:true,
     say:'Теперь ресурса хватает — отправляй' },
   { level:3 },
 
-  { who:'granny', text:'Вот так и живём: заказ, ресурс, заказ. Дальше сам' },
+  // единственный выход на карту за весь вариант — и он же конец обучения:
+  // дальше человек играет именно там
+  { close:true, who:'granny', text:'Вот так и живём: заказ, ресурс, заказ. Дальше сам' },
 ];
 
 window.farm = createFarm({ script: SCRIPT, variant:'b' });

@@ -736,7 +736,9 @@ ordersBox.querySelector('.back').addEventListener('click', () => {
 });
 
 /* Награда летит в счётчики наверху — те же, что в шапке карты.
-   Дальше экран закрывается и приходит новый уровень. */
+   Дальше приходит уровень. Экран заказа при этом может остаться открытым:
+   если сценарий продолжается на нём же, закрывать его незачем — человек
+   всё это время сидит в одном экране и лишних переходов видеть не должен. */
 ordersBox.querySelector('.send').addEventListener('click', () => {
   hideGenHint();
   hidePoint();
@@ -745,10 +747,11 @@ ordersBox.querySelector('.send').addEventListener('click', () => {
     for(let n = 0; n < 4; n++) flyReward(from, targets[k === 0 ? 1 : 0], n * 90);
   });
   ordersBox.querySelector('.send').disabled = true;
+  const stay = !!SCRIPT[sc]?.stay;
   setTimeout(() => {
-    ordersBox.classList.remove('on');
+    if(!stay) ordersBox.classList.remove('on');
     ordersBox.querySelector('.send').disabled = false;
-    setTimeout(scNext, 380);
+    setTimeout(scNext, stay ? 80 : 380);
   }, 900);
 });
 
@@ -881,6 +884,8 @@ function scNext(){
 
   if(st.spawn) spawnBuilding(st.spawn);
   if(st.order) setOrder(st.order);
+  // явный выход на карту — нужен только там, где обучение кончилось
+  if(st.close){ closeGenerator(); ordersBox.classList.remove('on'); }
   if(st.open === 'orders')    openOrders();
   if(st.open === 'generator') openBuilding('generator');
   if(st.open === 'cafe')      openBuilding('cafe');
