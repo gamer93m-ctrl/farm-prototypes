@@ -403,7 +403,10 @@
      наезжает на реплику и закрывает начало строки. */
   /* типографика реплик из макета: SF Pro Text Semibold 15, трекинг −0.24,
      интерлиньяж авто. Семейство приходит от body, там уже SF Pro Text */
+  /* Высота фиксирована под четыре строки: короткая реплика не должна
+     поднимать панель, иначе персонаж и бабл прыгают на каждом шаге. */
   #story .bubble{margin-top:0;background:#1c1c1e;border-radius:18px;padding:18px 18px 22px;
+    min-height:110px;
     font-size:15px;line-height:normal;font-weight:600;letter-spacing:-.24px;
     position:relative;z-index:1;box-shadow:0 10px 30px rgba(0,0,0,.6)}
   /* значок «дальше» — только подсказка: листает тап по всей панели */
