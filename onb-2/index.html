@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Онбординг — вариант 2</title>
-<link rel="stylesheet" href="../shared/generator/generator.css?v=20260809212821">
-<link rel="stylesheet" href="../shared/farm/farm.css?v=20260809212821">
+<link rel="stylesheet" href="../shared/generator/generator.css?v=20260809215138">
+<link rel="stylesheet" href="../shared/farm/farm.css?v=20260809215138">
 </head>
 <body>
-<script src="../shared/generator/generator.js?v=20260809212821"></script>
-<script src="../shared/farm/farm.js?v=20260809212821"></script>
+<script src="../shared/generator/generator.js?v=20260809215138"></script>
+<script src="../shared/farm/farm.js?v=20260809215138"></script>
 <script>
 'use strict';
 
@@ -25,19 +25,23 @@
    ресурсом. Генератор в конце не закрывается сам — стрелка возвращает
    к доске, чтобы цикл читался как цикл.
 
-   Длина реплик: сюжетный бабл на карте — до 64 символов, это две строки
-   на 375. Подсказка внутри экрана уже, там до 45. Всё, что длиннее,
-   расползается на три-четыре строки и на ходу не читается.
+   Длина реплик: сюжетный бабл на карте — до 96 символов, это три строки
+   на 375, дальше панель лезет на игровое поле. Подсказка внутри экрана
+   уже, там держим до 45.
 
    Каждая реплика закрывает задачу уровня, а не просто звучит:
      уровень 1 — куда попал, главная задача, первое действие;
      уровень 2 — ресурсы не берутся из ниоткуда, и делают их не грядкой;
      уровень 3 — здания строим сами, генератор и кофейня — одна цепочка. */
 const SCRIPT = [
-  // ── уровень 1: куда попал и что здесь главное ──
-  { who:'grandson', text:'Приехал к бабусе в деревню. Тут ферма и ни одной кофейни' },
-  { who:'granny',   text:'Ферма живёт заказами жителей. Выполняешь — деревня растёт' },
-  { who:'grandson', text:'Вон доска заказов. Давай закроем первый',
+  // ── уровень 1: завязка и что здесь главное ──
+  // Четыре реплики, каждая со своей работой: зачем он здесь, что от него
+  // хотят, как устроен мир, что делать прямо сейчас. Обещание из первой
+  // закрывается последней репликой всего онбординга.
+  { who:'grandson', text:'Бабуся написала: приезжай, потянешь — ферма твоя. Ну я и рванул из города' },
+  { who:'granny',   text:'Потянешь ли — поглядим. Ферма без рук стоит, а деревня тут одна на всех' },
+  { who:'granny',   text:'Живём заказами жителей: что просят — то и делаем. Выполняешь — деревня растёт' },
+  { who:'grandson', text:'Вон и доска заказов стоит. Давай с первого и начнём',
     spawn:'orders', focus:'orders', pointAt:'.plot[data-id="orders"]', wait:'ordersOpened' },
 
   { orders:'send', order:{ client:0, item:'bean', have:5, need:1 }, stay:true,
@@ -49,7 +53,7 @@ const SCRIPT = [
     tip:'Заказ есть, а зерна нет. Идём делать',
     pointAt:'#orders .back', wait:'ordersClosed' },
 
-  { who:'grandson', text:'Зерно растят в генераторе. Это не грядка, а установка',
+  { who:'grandson', text:'На других фермах зерно в поле сеют. У нас его делает генератор — это установка',
     focus:'generator', pointAt:'.plot[data-id="gen"]', wait:'generatorOpened' },
   { gen:'seed',  say:'Заряжай зерно во все ячейки' },
   { gen:'boost', say:'Ждать не обязательно — ускорь', stay:true },
@@ -65,7 +69,7 @@ const SCRIPT = [
     tip:'Просят американо. Его варят из зерна',
     pointAt:'#orders .back', wait:'ordersClosed' },
 
-  { who:'granny', text:'Американо варит кофейня. Её надо построить' },
+  { who:'granny', text:'Само зерно в американо не превратится. Нужна кофейня — здания у нас строят сами' },
   { pointAt:'#openSheet', wait:'sheetOpened' },
   { pointAt:'[data-cat="Преобразователи"]', wait:'catOpened' },
   { pointAt:'[data-item="coffee"]', wait:'placing' },
@@ -83,7 +87,7 @@ const SCRIPT = [
 
   // единственный выход на карту за весь вариант — и он же конец обучения:
   // дальше свободная игра, а она живёт на карте
-  { close:true, who:'granny', text:'Дальше сам: заказ, ресурс, заказ. Ферма твоя' },
+  { close:true, who:'granny', text:'Вот теперь верю — ферма твоя. Дальше сам: заказ, ресурс, заказ' },
 ];
 
 window.farm = createFarm({ script: SCRIPT, variant:'b' });
