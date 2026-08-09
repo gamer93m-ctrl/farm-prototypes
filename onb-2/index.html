@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Онбординг — вариант 2</title>
-<link rel="stylesheet" href="../shared/generator/generator.css?v=202608092001">
-<link rel="stylesheet" href="../shared/farm/farm.css?v=202608092001">
+<link rel="stylesheet" href="../shared/generator/generator.css?v=202608092109">
+<link rel="stylesheet" href="../shared/farm/farm.css?v=202608092109">
 </head>
 <body>
-<script src="../shared/generator/generator.js?v=202608092001"></script>
-<script src="../shared/farm/farm.js?v=202608092001"></script>
+<script src="../shared/generator/generator.js?v=202608092109"></script>
+<script src="../shared/farm/farm.js?v=202608092109"></script>
 <script>
 'use strict';
 
@@ -57,9 +57,30 @@ const SCRIPT = [
     say:'Теперь ресурса хватает — отправляй' },
   { level:3 },
 
+  // ── второй виток цикла: теперь просят американо, а варить его негде ──
+  { open:'orders', order:{ client:0, item:'cup', have:0, need:1 },
+    tip:'Теперь просят американо. Варить негде — нужна кофейня',
+    pointAt:'#orders .back', wait:'ordersClosed' },
+
+  { pointAt:'#openSheet', wait:'sheetOpened' },
+  { pointAt:'[data-cat="Преобразователи"]', wait:'catOpened' },
+  { pointAt:'[data-item="coffee"]', wait:'placing' },
+  { hint:'Перетащи здание и жми «Построить»', wait:'built' },
+
+  { pointAt:'.plot[data-item="coffee"]', wait:'cafeOpened' },
+  { gen:'seed',  say:'Зёрна в кофейню — на все места' },
+  { gen:'boost', say:'Ускорь — американо будет сразу', stay:true },
+  { tip:'Американо готов. Возвращаемся к заказу',
+    pointAt:'#screen .back', wait:'screenClosed' },
+
+  { focus:'orders', pointAt:'.plot[data-id="orders"]', wait:'ordersOpened' },
+  { orders:'send', order:{ client:0, item:'cup', have:5, need:1 }, stay:true,
+    say:'Отправляй — заказ закрыт' },
+  { level:4 },
+
   // единственный выход на карту за весь вариант — и он же конец обучения:
-  // дальше человек играет именно там
-  { close:true, who:'granny', text:'Вот так и живём: заказ, ресурс, заказ. Дальше сам' },
+  // дальше свободная игра, а она живёт на карте
+  { close:true, who:'granny', text:'Дальше сам: заказ, ресурс, заказ. Ферма твоя' },
 ];
 
 window.farm = createFarm({ script: SCRIPT, variant:'b' });
