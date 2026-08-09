@@ -265,8 +265,13 @@
      ровно на кнопку отправки */
   #orders{--shift:scale(.96);position:fixed;inset:0;z-index:52;background:#000;
     display:flex;flex-direction:column;padding:44px 16px 132px}
-  #orders .back{position:absolute;left:8px;top:44px;border:0;background:none;
-    color:#0a84ff;font:300 26px/24px inherit;padding:8px}
+  /* Стрелка «назад» крупная, как в макете: тонкий значок в углу
+     терялся. Остальная шапка приглушена — так задумано в онбординге. */
+  #orders .back{position:absolute;left:10px;top:40px;width:44px;height:44px;border:0;
+    background:none;padding:0;font-size:0}
+  #orders .back::before{content:"";display:block;width:17px;height:17px;margin-left:8px;
+    border-left:4px solid #0a84ff;border-bottom:4px solid #0a84ff;border-radius:2px;
+    transform:rotate(45deg)}
   #orders .obar{display:flex;justify-content:flex-end;gap:10px;height:28px}
   #orders .badge{height:28px;border-radius:100px;background:#1c1c1e;display:flex;align-items:center;
     gap:6px;padding:0 10px;font:600 13px/1 inherit;color:rgba(255,255,255,.45)}
