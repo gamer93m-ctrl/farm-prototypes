@@ -703,13 +703,17 @@ function setOrder(cfg){
   count.textContent = c.have + '/' + c.need;
   count.classList.toggle('short', !done);
   ordersBox.querySelector('.slot .ok').style.display = done ? '' : 'none';
+  ordersBox.querySelector('.slot').classList.toggle('short', !done);
 
-  // выбранный заказчик встаёт первым — карточка своим хвостиком смотрит на него
+  // Выбранный заказчик встаёт первым — карточка своим хвостиком смотрит на
+  // него. Кого выбрали, показывает жёлтая обводка, а зелёная галочка только
+  // то, что заказ реально можно закрыть: иначе она обещала выполнимость,
+  // когда ресурса нет.
   ordersBox.querySelectorAll('.client').forEach((el, i) => {
     const on = i === c.client;
     el.classList.toggle('on', on);
     el.style.order = on ? 0 : 1;
-    el.querySelector('.ok').style.display = on ? '' : 'none';
+    el.querySelector('.ok').style.display = (on && done) ? '' : 'none';
   });
 
   const send = ordersBox.querySelector('.send');
