@@ -1084,10 +1084,10 @@ function ordersStep(say){
 
 function genStep(kind, say){
   if(kind === 'seed'){
-    genBubble(say || 'Тащи зерно на грядки — сажай во все сразу', true);
+    genBubble(say || 'Сажай зерно сразу во все грядки!', true);
     genWait = 'allSeeded';
   } else if(kind === 'boost'){
-    genBubble(say || 'Ждать неохота? Ускорь — поспеет сразу', false);
+    genBubble(say || 'Ждать не обязательно, можно ускорить!', false);
     showBoostTip();
     genWait = 'boosted';
   }
