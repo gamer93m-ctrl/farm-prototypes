@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Онбординг — вариант 2</title>
-<link rel="stylesheet" href="../shared/generator/generator.css?v=202608092109">
-<link rel="stylesheet" href="../shared/farm/farm.css?v=202608092109">
+<link rel="stylesheet" href="../shared/generator/generator.css?v=20260809212821">
+<link rel="stylesheet" href="../shared/farm/farm.css?v=20260809212821">
 </head>
 <body>
-<script src="../shared/generator/generator.js?v=202608092109"></script>
-<script src="../shared/farm/farm.js?v=202608092109"></script>
+<script src="../shared/generator/generator.js?v=20260809212821"></script>
+<script src="../shared/farm/farm.js?v=20260809212821"></script>
 <script>
 'use strict';
 
@@ -23,55 +23,58 @@
    Человек не выходит на карту между шагами просто так: после уровня он
    остаётся на доске, там же узнаёт, чего не хватает, и его ведут за
    ресурсом. Генератор в конце не закрывается сам — стрелка возвращает
-   к доске, чтобы цикл читался как цикл. */
-const SCRIPT = [
-  // кто мы и где мы — два бабла, не больше
-  { who:'grandson', text:'Чуваки, это лютый минус вайб — я устал от городской жизни' },
-  { who:'granny',   text:'А ты че думал, шегол? В деревне не все так просто, тут нужно со знанием дела, по совести, без суеты бэм бэм…' },
+   к доске, чтобы цикл читался как цикл.
 
-  // цель: доска заказов
-  { who:'grandson', text:'Здесь жители оставляют свои заказы. Давай выполним первый',
+   Длина реплик: сюжетный бабл на карте — до 64 символов, это две строки
+   на 375. Подсказка внутри экрана уже, там до 45. Всё, что длиннее,
+   расползается на три-четыре строки и на ходу не читается.
+
+   Каждая реплика закрывает задачу уровня, а не просто звучит:
+     уровень 1 — куда попал, главная задача, первое действие;
+     уровень 2 — ресурсы не берутся из ниоткуда, и делают их не грядкой;
+     уровень 3 — здания строим сами, генератор и кофейня — одна цепочка. */
+const SCRIPT = [
+  // ── уровень 1: куда попал и что здесь главное ──
+  { who:'grandson', text:'Приехал к бабусе в деревню. Тут ферма и ни одной кофейни' },
+  { who:'granny',   text:'Ферма живёт заказами жителей. Выполняешь — деревня растёт' },
+  { who:'grandson', text:'Вон доска заказов. Давай закроем первый',
     spawn:'orders', focus:'orders', pointAt:'.plot[data-id="orders"]', wait:'ordersOpened' },
 
-  // первый заказ уже готов — показываем, чем всё кончается
-  // экран не закрываем: уровень придёт прямо поверх заказа, и следующий
-  // заказчик появится здесь же — человек всё это время в одном экране
   { orders:'send', order:{ client:0, item:'bean', have:5, need:1 }, stay:true,
-    say:'Давай отправим первый готовый заказ' },
+    say:'Отправляй — заказ готов' },
   { level:2 },
 
-  // ── цикл: остаёмся на доске, приходит новый заказ и ресурса не хватает ──
+  // ── уровень 2: ресурсы надо произвести, и делают их не грядкой ──
   { open:'orders', order:{ client:1, item:'bean', have:0, need:2 },
-    tip:'У нас новый заказик, но нет нужного ресурса. Создадим?',
+    tip:'Заказ есть, а зерна нет. Идём делать',
     pointAt:'#orders .back', wait:'ordersClosed' },
 
-  { who:'grandson', text:'Для выполнения заказа нужен генератор',
+  { who:'grandson', text:'Зерно растят в генераторе. Это не грядка, а установка',
     focus:'generator', pointAt:'.plot[data-id="gen"]', wait:'generatorOpened' },
-  { gen:'seed',  say:'Сажай зерно во все грядки' },
+  { gen:'seed',  say:'Заряжай зерно во все ячейки' },
   { gen:'boost', say:'Ждать не обязательно — ускорь', stay:true },
+  { tip:'Ресурс твой. Неси в заказ', pointAt:'#screen .back', wait:'screenClosed' },
 
-  // экран не закрылся сам: возвращаемся к доске своими руками
-  { tip:'Всё, го выполнять заказ', pointAt:'#screen .back', wait:'screenClosed' },
   { focus:'orders', pointAt:'.plot[data-id="orders"]', wait:'ordersOpened' },
   { orders:'send', order:{ client:1, item:'bean', have:5, need:2 }, stay:true,
-    say:'Теперь ресурса хватает — отправляй' },
+    say:'Зерна хватает — отправляй' },
   { level:3 },
 
-  // ── второй виток цикла: теперь просят американо, а варить его негде ──
+  // ── уровень 3: здания строим сами, и цепочка идёт дальше ──
   { open:'orders', order:{ client:0, item:'cup', have:0, need:1 },
-    tip:'Теперь просят американо. Варить негде — нужна кофейня',
+    tip:'Просят американо. Его варят из зерна',
     pointAt:'#orders .back', wait:'ordersClosed' },
 
+  { who:'granny', text:'Американо варит кофейня. Её надо построить' },
   { pointAt:'#openSheet', wait:'sheetOpened' },
   { pointAt:'[data-cat="Преобразователи"]', wait:'catOpened' },
   { pointAt:'[data-item="coffee"]', wait:'placing' },
   { hint:'Перетащи здание и жми «Построить»', wait:'built' },
 
   { pointAt:'.plot[data-item="coffee"]', wait:'cafeOpened' },
-  { gen:'seed',  say:'Зёрна в кофейню — на все места' },
+  { gen:'seed',  say:'Зерно в кофейню — станет американо' },
   { gen:'boost', say:'Ускорь — американо будет сразу', stay:true },
-  { tip:'Американо готов. Возвращаемся к заказу',
-    pointAt:'#screen .back', wait:'screenClosed' },
+  { tip:'Готовый продукт. Неси заказчику', pointAt:'#screen .back', wait:'screenClosed' },
 
   { focus:'orders', pointAt:'.plot[data-id="orders"]', wait:'ordersOpened' },
   { orders:'send', order:{ client:0, item:'cup', have:5, need:1 }, stay:true,
