@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Онбординг — вариант 2</title>
+<link rel="stylesheet" href="../shared/generator/generator.css">
+<link rel="stylesheet" href="../shared/farm/farm.css">
+</head>
+<body>
+<script src="../shared/generator/generator.js"></script>
+<script src="../shared/farm/farm.js"></script>
+<script>
+'use strict';
+
+/* ═══ СЦЕНАРИЙ ВТОРОГО ВАРИАНТА ═══
+
+   Пока пусто: движок отработает без сюжета — откроется карта, по зданиям
+   можно ходить руками. Как будет сценарий, он кладётся сюда.
+
+   Поля шага (всё необязательное):
+     who      'grandson' | 'granny'   — кто говорит
+     text     реплика в панели снизу
+     say      реплика внутри экрана здания (для gen и orders)
+     wait     ждём событие вместо тапа:
+              generatorOpened · cafeOpened · ordersOpened · sheetOpened
+              catOpened · placing · built
+     pointAt  css-селектор, на что показывает стрелка
+     focus    куда ведём камеру: generator · cafe · orders · oldman
+     gen      'seed' | 'boost'   — шаг внутри генератора или кофейни
+     orders   'send'             — шаг внутри экрана заказа
+     level    2 | 3 | 4          — экран нового уровня
+     spawn    'orders'           — здание, которое ставит сам сюжет
+     showOldman  true            — вывести деда на карту
+     hint     строка внизу экрана
+
+   Шаг без wait листается тапом в любое место. Шаг с wait ждёт действия. */
+const SCRIPT = [];
+
+window.farm = createFarm({ script: SCRIPT, variant:'b' });
+</script>
+</body>
+</html>
