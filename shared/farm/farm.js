@@ -105,7 +105,7 @@ const FARM_MARKUP = String.raw`
 
     <div class="clients">
       <button class="client on"><img src="../assets/onboarding/Granny.png" alt=""><span class="ok">✓</span></button>
-      <button class="client"><img src="../assets/onboarding/oldman and cofe.png" alt=""></button>
+      <button class="client"><img src="../assets/onboarding/oldman and cofe.png" alt=""><span class="ok">✓</span></button>
     </div>
 
     <div class="card">
@@ -688,7 +688,35 @@ function closeGenerator(){
    после ускорения. */
 
 const ordersBox = document.getElementById('orders');
-ordersBox.querySelector('.slot img').src = CUP;
+
+/* Что за заказ висит на доске, задаёт сценарий: кто заказчик, что нужно и
+   сколько уже есть. Пока не хватает — счётчик красный, галочки нет, кнопка
+   гаснет. Так экран умеет показывать и готовый заказ, и невыполнимый. */
+const ORDER_ITEMS = { bean:'../assets/imgcoffe.png', cup:CUP };
+
+function setOrder(cfg){
+  const c = Object.assign({ client:0, item:'cup', have:5, need:1 }, cfg || {});
+  const done = c.have >= c.need;
+
+  ordersBox.querySelector('.slot img').src = ORDER_ITEMS[c.item] || ORDER_ITEMS.cup;
+  const count = ordersBox.querySelector('.slot b');
+  count.textContent = c.have + '/' + c.need;
+  count.classList.toggle('short', !done);
+  ordersBox.querySelector('.slot .ok').style.display = done ? '' : 'none';
+
+  // выбранный заказчик встаёт первым — карточка своим хвостиком смотрит на него
+  ordersBox.querySelectorAll('.client').forEach((el, i) => {
+    const on = i === c.client;
+    el.classList.toggle('on', on);
+    el.style.order = on ? 0 : 1;
+    el.querySelector('.ok').style.display = on ? '' : 'none';
+  });
+
+  const send = ordersBox.querySelector('.send');
+  send.disabled = !done;
+  send.classList.toggle('off', !done);
+}
+setOrder();
 
 function openOrders(){
   ordersBox.classList.add('on');
@@ -698,6 +726,8 @@ function openOrders(){
 ordersBox.querySelector('.back').addEventListener('click', () => {
   ordersBox.classList.remove('on');
   hideGenHint();
+  hidePoint();
+  if(scWait === 'ordersClosed') return scFire('ordersClosed');
   // вышел посреди обучения — зовём обратно, как и в других зданиях
   if(SCRIPT[sc]?.orders){
     sc = SCRIPT.findIndex(s => s.wait === 'ordersOpened') - 1;
@@ -744,6 +774,8 @@ function flyReward(from, to, delay){
 screen.querySelector('.back').addEventListener('click', () => {
   closeGenerator();
   levelBox.classList.remove('on');
+  hidePoint();
+  if(scWait === 'screenClosed') return scFire('screenClosed');
   if(inGenPart()){
     genWait = null;
     // отматываем к приглашению зайти именно в это здание, а не всегда в генератор
@@ -848,6 +880,20 @@ function scNext(){
   tapcatch.classList.toggle('on', !!(st.text && !st.wait));
 
   if(st.spawn) spawnBuilding(st.spawn);
+  if(st.order) setOrder(st.order);
+  if(st.open === 'orders')    openOrders();
+  if(st.open === 'generator') openBuilding('generator');
+  if(st.open === 'cafe')      openBuilding('cafe');
+
+  // подсказка внутри открытого экрана: сама встаёт там, где не мешает
+  if(st.tip){
+    story.classList.remove('on');
+    screenTip(st.tip);
+    if(st.pointAt) setTimeout(() => pointTo(st.pointAt), 120);
+    scWait = st.wait || null;
+    return;
+  }
+
   if(st.orders){ story.classList.remove('on'); return ordersStep(st.say); }
   if(st.gen){ story.classList.remove('on'); return genStep(st.gen, st.say); }
   if(st.level){ story.classList.remove('on'); return showLevel(st.level); }
@@ -898,6 +944,10 @@ function scNext(){
 
   scWait = st.wait || null;
   story.querySelector('.next').style.display = scWait ? 'none' : '';
+
+  // Служебный шаг — только настроил что-то и ничего не показал. Ждать его
+  // нечем и листать нечего, поэтому проматываем сами: иначе сценарий встаёт.
+  if(!st.text && !st.wait && !st.hint) setTimeout(scNext, 0);
 }
 
 /* Листается тапом по всей панели — и по реплике, и по кнопке «Дальше»:
@@ -1001,15 +1051,25 @@ function hidePoint(){ pointSel = null; cancelAnimationFrame(pointRaf); point.cla
 
 /* ─── сценарий внутри генератора ─── */
 
-/* подсказка на экране заказов: бабл внизу, стрелка на кнопку отправки */
-function ordersStep(say){
+/* Подсказка внутри любого экрана здания. На заказах садится под карточку,
+   в генераторе и кофейне — над игровой зоной. */
+function screenTip(text){
+  if(ordersBox.classList.contains('on')) return ordersBubble(text);
+  genBubble(text, false);
+}
+
+function ordersBubble(text){
   genSpeech.querySelector('img').src = '../assets/onboarding/avatar maloy-mini.png';
-  genSpeech.querySelector('.b').textContent = say || 'Отправляем заказ';
+  genSpeech.querySelector('.b').textContent = text;
   genSpeech.classList.add('on');
-  // под карточкой, ниже стрелки на кнопку
   const card = ordersBox.querySelector('.card').getBoundingClientRect();
   genSpeech.style.top = Math.min(card.bottom + 56, innerHeight - genSpeech.offsetHeight - 12) + 'px';
   genDemo.classList.remove('on');
+}
+
+/* подсказка на экране заказов: бабл внизу, стрелка на кнопку отправки */
+function ordersStep(say){
+  ordersBubble(say || 'Отправляем заказ');
   setTimeout(() => pointTo('#orders .send'), 120);
 }
 
@@ -1127,10 +1187,12 @@ boostTip.querySelector('.boost').addEventListener('click', () => {
   const cells = [...document.querySelectorAll(genHost + ' .cell')];
   activeGen.setCells(cells.map((_, i) => ({ index:i, state:'empty' })));
   genWait = null;
-  // зёрна долетают (последнее стартует с задержкой), затем закрываем экран
+  // Обычно экран уходит сам. Но сценарий может попросить остаться —
+  // тогда дальше человека уводят подсказкой и стрелкой на выход.
+  const stay = !!SCRIPT[sc]?.stay;
   setTimeout(() => {
-    closeGenerator();
-    setTimeout(scNext, 380);        // дожидаемся, пока экран уедет
+    if(!stay) closeGenerator();
+    setTimeout(scNext, stay ? 60 : 380);
   }, 620);
 });
 

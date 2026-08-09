@@ -294,6 +294,9 @@
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding-bottom:4px}
   #orders .slot img{width:52px;height:52px;object-fit:contain}
   #orders .slot b{font-size:14px;font-weight:700}
+  /* не хватает — счётчик красный, кнопка гаснет */
+  #orders .slot b.short{color:#ff453a}
+  #orders .send.off{opacity:.4}
   #orders .slot .ok{position:absolute;right:-6px;top:-6px;width:26px;height:26px;border-radius:50%;
     background:#30d158;color:#fff;font:700 14px/26px inherit;text-align:center}
   #orders .rewtitle{margin-top:auto;display:flex;align-items:center;gap:12px;
