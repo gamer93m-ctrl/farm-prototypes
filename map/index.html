@@ -279,8 +279,12 @@
   #orders .badge.ring{border:2px solid rgba(66,139,249,.5);background:none}
   #orders h2{margin:22px 0 0;font-size:30px;font-weight:700;color:rgba(255,255,255,.32);
     display:flex;align-items:center;gap:10px}
+  /* Размер пишем отдельными свойствами: в короткой записи font слово
+     inherit невалидно как имя шрифта, всё правило отбрасывается — и «i»
+     наследовал 30px заголовка, вылезая из кружка. */
   #orders h2 .info{width:24px;height:24px;border-radius:50%;background:#2c2c2e;color:#fff;
-    font:700 13px/24px inherit;text-align:center;font-style:normal}
+    font-family:inherit;font-size:13px;font-weight:700;line-height:24px;
+    text-align:center;font-style:normal}
 
   /* заказчики */
   #orders .clients{display:flex;gap:12px;margin-top:18px}
@@ -290,7 +294,8 @@
   #orders .client img{width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:50% 12%;
     display:block}
   #orders .client .ok{position:absolute;right:-2px;top:-2px;width:26px;height:26px;border-radius:50%;
-    background:#30d158;color:#fff;font:700 14px/26px inherit;text-align:center}
+    background:#30d158;color:#fff;font-family:inherit;font-size:14px;font-weight:700;
+    line-height:26px;text-align:center}
 
   /* карточка заказа */
   #orders .card{position:relative;margin-top:12px;background:#1c1c1e;border-radius:22px;
@@ -308,7 +313,8 @@
   #orders .slot img{width:52px;height:52px;object-fit:contain}
   #orders .slot b{font-size:14px;font-weight:700}
   #orders .slot .ok{position:absolute;right:-6px;top:-6px;width:26px;height:26px;border-radius:50%;
-    background:#30d158;color:#fff;font:700 14px/26px inherit;text-align:center}
+    background:#30d158;color:#fff;font-family:inherit;font-size:14px;font-weight:700;
+    line-height:26px;text-align:center}
   #orders .rewtitle{margin-top:auto;display:flex;align-items:center;gap:12px;
     color:#8e8e93;font-size:14px}
   #orders .rewtitle span{flex:1;height:1px;background:rgba(255,255,255,.14)}
