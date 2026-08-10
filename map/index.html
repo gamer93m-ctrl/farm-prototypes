@@ -335,7 +335,7 @@
   /* Экран для тестировщика, а не для игрока: он закрывает прогон и говорит,
      что путь пройден целиком. Собран как экран уровня, чтобы не выбиваться. */
   #finish{--shift:scale(.97);position:fixed;inset:0;z-index:82;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;text-align:center;padding:64px 24px 110px;
+    align-items:center;justify-content:center;text-align:center;padding:64px 24px;
     background:radial-gradient(90% 45% at 50% 32%,#16281c 0%,#000 72%)}
   /* картинка горизонтальная, показываем целиком, без обрезки по бокам */
   #finish .cat{width:min(100%,320px);height:auto;border-radius:20px;display:block}
@@ -343,13 +343,9 @@
     font-size:120px;background:#1c1c1e;border-radius:26px}
   #finish h2{margin:26px 0 0;font-size:30px;font-weight:700;letter-spacing:-.3px}
   #finish p{margin:12px 0 0;color:#8e8e93;font-size:15px;line-height:1.35;max-width:290px}
-  #finish .done{position:absolute;left:24px;right:24px;bottom:34px;background:#ffd60a;color:#000;
-    border:0;border-radius:14px;padding:17px;font:600 16px/1 inherit}
-  #finish .done:active{transform:scale(.98)}
   #finish.on .cat{animation:medalpop .6s cubic-bezier(.34,1.5,.64,1) both}
   #finish.on h2{animation:lvlrise .45s var(--ease) .12s both}
   #finish.on p{animation:lvlrise .45s var(--ease) .2s both}
-  #finish.on .done{animation:lvlrise .45s var(--ease) .3s both}
 
   /* ─── экран нового уровня ─── */
   /* Появляется не разом: сперва подложка, потом медаль, потом строчки —
@@ -563,7 +559,6 @@
     <img class="cat" alt="">
     <h2>Спасибо!</h2>
     <p>Вы прошли весь путь и выполнили заказ. Деревня в надёжных руках</p>
-    <button class="done">Готово</button>
   </div>
 
   <div id="level">
@@ -1709,8 +1704,6 @@ function showFinish(){
   finishBox.classList.add('on');
   setTimeout(confetti, 400);
 }
-finishBox.querySelector('.done').addEventListener('click', () => finishBox.classList.remove('on'));
-
 /* Кот на финальном экране. Файла может ещё не быть, поэтому перебираем
    расширения по очереди, а если не нашлось ни одного, показываем эмодзи.
    Достаточно положить картинку в assets/onboarding/cat.png и она подхватится. */

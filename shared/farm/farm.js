@@ -126,7 +126,6 @@ const FARM_MARKUP = String.raw`
     <img class="cat" alt="">
     <h2>Спасибо!</h2>
     <p>Вы прошли весь путь и выполнили заказ. Деревня в надёжных руках</p>
-    <button class="done">Готово</button>
   </div>
 
   <div id="level">
@@ -1298,8 +1297,6 @@ function showFinish(){
   finishBox.classList.add('on');
   setTimeout(confetti, 400);
 }
-finishBox.querySelector('.done').addEventListener('click', () => finishBox.classList.remove('on'));
-
 /* Кот на финальном экране. Файла может ещё не быть, поэтому перебираем
    расширения по очереди, а если не нашлось ни одного, показываем эмодзи.
    Достаточно положить картинку в assets/onboarding/cat.png и она подхватится. */
