@@ -5,12 +5,12 @@
 
   /* ─── карта ─── */
   #viewport{position:fixed;inset:0;overflow:hidden;touch-action:none}
-  #canvas{position:absolute;left:0;top:0;width:922px;height:1200px;transform-origin:0 0}
+  #canvas{position:absolute;left:0;top:0;width:2600px;height:1533px;transform-origin:0 0}
   #canvas img.base{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 
   /* Дед стоит на карте и хочет кофе. Размер человеческий: здание занимает
      четыре тайла, дед — меньше одного в ширину, иначе он ростом с дом. */
-  #oldman{position:absolute;left:470px;top:690px;transform:translate(-50%,-50%);width:78px;
+  #oldman{position:absolute;left:1392px;top:1078px;transform:translate(-50%,-50%);width:30px;
     pointer-events:none;display:block;visibility:hidden;opacity:0}
   /* дед приходит, а не возникает: подрастает снизу */
   #oldman.on{visibility:visible;animation:oldmanin .55s var(--ease) forwards}
@@ -19,10 +19,10 @@
     to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
   #oldman img{width:100%;display:block;filter:drop-shadow(0 8px 16px rgba(0,0,0,.45))}
   /* облачко по деду, а не по экрану: было больше его головы */
-  #oldman .want{position:absolute;left:50%;top:-42px;transform:translateX(-50%);
-    width:46px;height:46px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:23px}
-  #oldman .want::after{content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
-    width:8px;height:8px;border-radius:50%;background:#fff}
+  #oldman .want{position:absolute;left:50%;top:-22px;transform:translateX(-50%);
+    width:24px;height:24px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:12px}
+  #oldman .want::after{content:"";position:absolute;left:50%;bottom:-3px;transform:translateX(-50%);
+    width:5px;height:5px;border-radius:50%;background:#fff}
 
   /* Плитка — просто точка на карте: ширину и высоту задаёт сам спрайт,
      иначе крупные здания не попадали в свою же зону нажатия. */
@@ -30,7 +30,7 @@
   /* Метка места — ромб ровно в четыре тайла карты, как основание у зданий,
      нарисованных на самой карте (тайл 83.6×44.1). Центр ромба совпадает
      с точкой привязки, поэтому здание стоит на нём, а не рядом. */
-  .pad{position:absolute;left:0;top:0;width:334px;height:176px;
+  .pad{position:absolute;left:0;top:0;width:127px;height:67px;
     transform:translate(-50%,-50%);opacity:0;transition:opacity .15s;
     clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:rgba(130,255,160,.95)}
   .pad::after{content:"";position:absolute;inset:0;clip-path:inherit;transform:scale(.9);
@@ -58,24 +58,30 @@
 
   /* чип живёт внутри картинки здания, чтобы висеть над его крышей,
      а не над точкой привязки: у высоких зданий он оказывался внутри стены */
-  .chip{position:absolute;left:50%;top:-10px;transform:translate(-50%,-100%);
-    background:#fff;color:#000;border-radius:100px;padding:6px 12px;font:600 13px/1 inherit;white-space:nowrap;
-    box-shadow:0 4px 12px rgba(0,0,0,.3)}
-  .chip.unlock{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;
-    font-size:26px;padding:0;animation:bob 1.2s ease-in-out infinite}
+  /* Чипы и подписи живут в координатах карты и масштабируются вместе с
+     ней. На новой карте объекты мельче, поэтому и кегль здесь мелкий:
+     на обзоре его всё равно не читают, а при наезде он встаёт в размер. */
+  .chip{position:absolute;left:50%;top:-4px;transform:translate(-50%,-100%);
+    background:#fff;color:#000;border-radius:100px;padding:2px 5px;
+    font-family:inherit;font-size:5px;font-weight:600;line-height:1;white-space:nowrap;
+    box-shadow:0 2px 5px rgba(0,0,0,.3)}
+  .chip.unlock{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;
+    font-size:10px;padding:0;animation:bob 1.2s ease-in-out infinite}
   /* заказ ждёт: облачко с посылкой и зелёной галочкой, как у деда с кофе */
-  .chip.order{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;
-    font-size:30px;padding:0;animation:bob 1.6s ease-in-out infinite}
-  .chip.order i{position:absolute;right:-2px;top:-2px;width:24px;height:24px;border-radius:50%;
-    background:#30d158;color:#fff;font:700 13px/24px inherit;text-align:center;font-style:normal}
-  .chip.order::after{content:"";position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);
-    width:11px;height:11px;border-radius:50%;background:#fff}
+  .chip.order{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+    font-size:17px;padding:0;animation:bob 1.6s ease-in-out infinite}
+  .chip.order i{position:absolute;right:-2px;top:-2px;width:15px;height:15px;border-radius:50%;
+    background:#30d158;color:#fff;font-family:inherit;font-size:9px;font-weight:700;line-height:15px;
+    text-align:center;font-style:normal}
+  .chip.order::after{content:"";position:absolute;left:50%;bottom:-5px;transform:translateX(-50%);
+    width:7px;height:7px;border-radius:50%;background:#fff}
   @keyframes bob{0%,100%{transform:translate(-50%,-100%)}50%{transform:translate(-50%,-125%)}}
 
   /* подпись — сразу под основанием, ромб основания кончается на 88px ниже точки */
-  .label{position:absolute;left:0;top:96px;transform:translateX(-50%);
-    background:rgba(0,0,0,.6);border-radius:100px;padding:5px 10px;
-    font:600 12px/1 inherit;white-space:nowrap;pointer-events:none}
+  .label{position:absolute;left:0;top:14px;transform:translateX(-50%);
+    background:rgba(0,0,0,.6);border-radius:100px;padding:2px 4px;
+    font-family:inherit;font-size:5px;font-weight:600;line-height:1;
+    white-space:nowrap;pointer-events:none}
 
   /* ─── шапка ─── */
   #bar{position:fixed;left:0;right:0;top:0;z-index:20;display:flex;align-items:center;gap:8px;

@@ -24,7 +24,7 @@
 
 const FARM_MARKUP = String.raw`
 <div id="viewport"><div id="canvas">
-  <img class="base" src="../assets/map/map-base.png" alt="">
+  <img class="base" src="../assets/map/map2.webp" alt="">
   <div id="oldman"><span class="want">☕</span><img src="../assets/map/oldman on map.png" alt=""></div>
 </div></div>
 
@@ -163,7 +163,7 @@ const CATALOG = [
       // генератор нарисован на самой карте: картинки нет, поэтому зону
       // нажатия задаём вручную — по размеру спрайта на карте
       { id:'gen', name:'Генератор', price:0, opens:'generator', art:'', hidden:true,
-        hit:{ w:355, h:297, dy:-35 } },
+        hit:{ w:135, h:113, dy:-13 } },
       { id:'coffee', name:'Кофейня', price:2000, opens:'cafe',
         art:'../assets/map/Cafe.png',
         artBuild:'../assets/map/Cafe-construction.png',
@@ -191,16 +191,16 @@ const itemById = id => CATALOG.flatMap(c => c.items).find(i => i.id === id);
 
    Кофейня заметно выше остальных, поэтому при равном основании смотрелась
    громоздкой — ей три тайла против четырёх у приземистых завода и склада. */
-const TILE_W = 83.6, TILE_H = 44.1;
+const TILE_W = 31.8, TILE_H = 16.8;
 const ART_FIT = {
-  'Cafe.png':                      { t:3, w:299, off:83  },
-  'Cafe-construction.png':         { t:3, w:252, off:65  },
-  'cafe-constructionend-open.png': { t:3, w:251, off:67  },
-  'building-generator.png':        { t:4, w:334, off:90  },
-  'building-order board.png':      { t:4, w:347, off:116 },
-  'building-barn.png':             { t:4, w:381, off:106 },
+  'Cafe.png':                      { t:3, w:114, off:32 },
+  'Cafe-construction.png':         { t:3, w:96,  off:25 },
+  'cafe-constructionend-open.png': { t:3, w:95,  off:25 },
+  'building-generator.png':        { t:4, w:127, off:34 },
+  'building-order board.png':      { t:4, w:132, off:44 },
+  'building-barn.png':             { t:4, w:145, off:40 },
 };
-const fitOf = src => ART_FIT[src.split('/').pop()] || { t:4, w:334, off:90 };
+const fitOf = src => ART_FIT[src.split('/').pop()] || { t:4, w:127, off:34 };
 
 /* Здания стоят где поставили: у каждого свои координаты на карте.
    Изометрия — ромбы, поэтому позицию притягиваем к решётке ромбов.
@@ -209,7 +209,7 @@ const fitOf = src => ART_FIT[src.split('/').pop()] || { t:4, w:334, off:90 };
    наклоном 0.528 и шагом 44.1, то есть тайл 83.6×44.1. Фазы PU/PV
    ставят решётку на нарисованные линии — иначе здание вставало между
    ромбами и метка места выглядела случайной. */
-const ISO_S = 0.528, ISO_P = 44.12, ISO_PU = 6.56, ISO_PV = 7.42;
+const ISO_S = 0.528, ISO_P = 16.77, ISO_PU = 7.69, ISO_PV = 0.94;
 
 /* Притягиваем к вершине решётки: метка занимает два тайла в каждую
    сторону, и на вершине она накрывает ровно четыре ромба. */
@@ -238,11 +238,21 @@ function load(){
   // Точка привязки — центр его каменной площадки, снятый с картинки: тогда
   // подпись и метка места ложатся так же, как у построенных зданий
   if(!built.some(b => b.id === 'gen'))
-    built.unshift({ id:'gen', itemId:'gen', state:'ready', x:293, y:956 });
+    built.unshift({ id:'gen', itemId:'gen', state:'ready', x:1360, y:1011 });
 }
 load();
 
 /* ═══════════ ОТРИСОВКА КАРТЫ ═══════════ */
+
+/* Дед стоит в одной точке и для камеры, и для отрисовки: раньше позиция
+   была прописана дважды, в стилях и в наводке, и они разъезжались. */
+const OLDMAN = { x:1392, y:1078 };
+
+/* Обжитая часть острова. Центр карты приходится на лес, поэтому и общий
+   план, и стартовая точка нового здания считаются отсюда. */
+const HOME = { x:1420, y:1030 };
+Object.assign(document.getElementById('oldman').style,
+  { left: OLDMAN.x + 'px', top: OLDMAN.y + 'px' });
 
 const canvas = document.getElementById('canvas');
 const hintline = document.getElementById('hintline');
@@ -269,7 +279,7 @@ function paintAll(popId){
     const f = src ? fitOf(src) : { t:4 };
     // метка места и подпись идут по основанию: у зданий разный размер в тайлах
     const pad = `<div class="pad" style="width:${(f.t*TILE_W).toFixed(0)}px;height:${(f.t*TILE_H).toFixed(0)}px"></div>`;
-    const labelTop = (f.t*TILE_H/2 + 8).toFixed(0);
+    const labelTop = (f.t*TILE_H/2 + 4).toFixed(0);
     // чип висит внутри картинки — над крышей, а не над точкой привязки
     const chip = b.state === 'building' ? '<div class="chip">🕐 …</div>'
                : b.state === 'gift'     ? '<div class="chip unlock">🔓</div>'
@@ -278,7 +288,7 @@ function paintAll(popId){
       (src ? `<div class="art" style="width:${f.w}px;bottom:${-f.off}px">
                 <img src="${src}" alt="" style="transform:scaleX(${b.flip ? -1 : 1})">${chip}
               </div>`
-           : `<div class="hit" style="width:${item.hit?.w || 334}px;height:${item.hit?.h || 176}px;
+           : `<div class="hit" style="width:${item.hit?.w || 127}px;height:${item.hit?.h || 67}px;
                    margin-top:${item.hit?.dy || 0}px"></div>${chip}`) +
       (chip ? '' : `<div class="label" style="top:${labelTop}px">${b.id === 'gen' ? 'Генератор' : item.name}</div>`);
     if(b.id === popId) el.classList.add('pop');
@@ -321,7 +331,7 @@ function startPlacing(itemId){
   // отъезжаем на общий план и ставим здание в середину карты —
   // ровно туда, куда после отъезда смотрит экран
   zoomOut();
-  placing = { itemId, flip:false, ...snapIso(MAP_W/2, MAP_H/2) };
+  placing = { itemId, flip:false, ...snapIso(HOME.x, HOME.y) };
   document.body.classList.add('placing');
   renderPlacing();
   scFire('placing');
@@ -343,8 +353,8 @@ function renderPlacing(){
   // метку берём с запасом: ровно по основанию она целиком прячется
   // под каменной площадкой здания и её не видно
   const pad = ghostEl.querySelector('.pad');
-  pad.style.width  = (f.t*TILE_W + 34).toFixed(0) + 'px';
-  pad.style.height = (f.t*TILE_H + 18).toFixed(0) + 'px';
+  pad.style.width  = (f.t*TILE_W + 14).toFixed(0) + 'px';
+  pad.style.height = (f.t*TILE_H + 8).toFixed(0) + 'px';
   const art = ghostEl.querySelector('.art');
   art.style.width  = f.w + 'px';
   art.style.bottom = -f.off + 'px';
@@ -502,7 +512,7 @@ function say(text){
 /* ═══════════ ПЕРЕТАСКИВАНИЕ КАРТЫ ═══════════ */
 
 const viewport = document.getElementById('viewport');
-const MAP_W = 922, MAP_H = 1200;
+const MAP_W = 2600, MAP_H = 1533;
 let scale = 1, ox = 0, oy = 0, drag = null, panned = false;
 
 function apply(){
@@ -513,6 +523,9 @@ function apply(){
 }
 function fit(){
   minScale = fitScale();
+  // на новой карте виден весь остров, поэтому приближения задаём долями
+  // от обзорного масштаба: 4× — рабочий вид здания, 5× — предел щипка
+  MAX_SCALE = minScale * 5;
   scale = minScale;
   ox = (innerWidth - MAP_W*scale)/2;
   oy = (innerHeight - MAP_H*scale)/2;
@@ -525,7 +538,7 @@ addEventListener('resize', fit);
 
 const pts = new Map();
 let pinch = null, minScale = 1;
-const MAX_SCALE = 2.6;
+let MAX_SCALE = 2.6;   // пересчитывается в fit() от размера экрана
 
 function fitScale(){ return Math.max(innerWidth / MAP_W, innerHeight / MAP_H); }
 
@@ -1001,19 +1014,18 @@ function plotOf(what){
    кофейню человек ставит сам, и заранее её координат никто не знает.
    Целимся чуть выше основания — иначе в кадр лезет только фундамент. */
 function focusOn(what){
-  const spot = what === 'oldman' ? { x:470, y:690 }
-             : plotOf(what);
+  const spot = what === 'oldman' ? OLDMAN : plotOf(what);
   if(!spot) return;
   const target = what === 'oldman' ? spot : { x:spot.x, y:spot.y - 60 };
   const busy = story.classList.contains('on') ? story.offsetHeight : 0;
   const cy = Math.max(innerHeight * .3, (innerHeight - busy) / 2);
-  tweenCamera({ s:1.35, cx:target.x, cy:target.y, sx:innerWidth/2, sy:cy });
+  tweenCamera({ s:minScale*4, cx:target.x, cy:target.y, sx:innerWidth/2, sy:cy });
 }
 
 /* Отъезд на общий план: выбирать место для здания в упор неудобно —
    не видно ни соседей, ни свободной земли. */
 function zoomOut(){
-  tweenCamera({ s:minScale, cx:MAP_W/2, cy:MAP_H/2, sx:innerWidth/2, sy:innerHeight/2 });
+  tweenCamera({ s:minScale*2.4, cx:HOME.x, cy:HOME.y, sx:innerWidth/2, sy:innerHeight/2 });
 }
 
 /* точку карты (cx,cy) подводим к точке экрана (sx,sy) при масштабе s */
@@ -1255,14 +1267,14 @@ function showLevel(n){
    третий уровень. Места подобраны по карте — там сплошная трава под всё
    основание. Берём первое, куда человек не поставил свою постройку. */
 const SPAWNS = {
-  orders:{ itemId:'orders', spots:[[711,956],[628,1000],[753,978],[586,1022]] },
+  orders:{ itemId:'orders', spots:[[1598,985],[1582,1094],[1137,960]] },
 };
 
 function spawnBuilding(kind){
   if(built.some(b => b.id === kind)) return;
   const cfg = SPAWNS[kind];
   const free = cfg.spots.find(([x,y]) =>
-    !built.some(b => Math.abs(b.x - x) < 120 && Math.abs(b.y - y) < 70)) || cfg.spots[0];
+    !built.some(b => Math.abs(b.x - x) < 140 && Math.abs(b.y - y) < 75)) || cfg.spots[0];
   built.push({ id:kind, itemId:cfg.itemId, state:'ready', order:true, x:free[0], y:free[1] });
   paintAll(kind);
   save();
