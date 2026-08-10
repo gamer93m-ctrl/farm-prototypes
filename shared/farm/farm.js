@@ -123,7 +123,7 @@ const FARM_MARKUP = String.raw`
   </div>
 
   <div id="finish" class="veil">
-    <img class="cat" alt="">
+    <img class="pic" alt="">
     <h2>Спасибо!</h2>
     <p>Вы прошли весь путь и выполнили заказ. Деревня в надёжных руках</p>
   </div>
@@ -1301,11 +1301,11 @@ function showFinish(){
    расширения по очереди, а если не нашлось ни одного, показываем эмодзи.
    Достаточно положить картинку в assets/onboarding/cat.png и она подхватится. */
 (function pickCat(names){
-  const img = finishBox.querySelector('img.cat');
+  const img = finishBox.querySelector('img.pic');
   if(!img) return;
   if(!names.length){
     img.replaceWith(Object.assign(document.createElement('div'),
-      { className:'cat none', textContent:'\u{1F63A}' }));
+      { className:'pic none', textContent:'\u{1F63A}' }));
     return;
   }
   img.onerror = () => pickCat(names.slice(1));
