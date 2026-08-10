@@ -344,6 +344,13 @@
 #phone.v2[data-ver="select"] .cell.sel::before,
 #phone.v2[data-ver="select"] .cell.sel::after{content:none}
 
+/* В режиме дёрганья сетка занята сбором и панорамироваться не должна:
+   иначе первое же ведение пальцем уезжает в прокрутку блока. Листают
+   тут краями экрана и пейджером — они вне скроллера и продолжают работать.
+   .nopan — то же самое на время любого заметания, ставится из lockScroll. */
+#phone.v2.jiggle #scroller,
+#phone.v2 #scroller.nopan{touch-action:none;overscroll-behavior:contain}
+
 #phone.v2.jiggle .cell.ready{
   animation:jiggle .28s linear var(--jd,0ms) infinite;
   transform-origin:50% 50%;

@@ -894,6 +894,7 @@ scroller.addEventListener('pointerdown', e => {
     dc = { idx:i, x:e.clientX, y:e.clientY, moved:false, sweeping:false, timer:null };
     if(jiggling){
       // режим уже включён: касание сразу собирает, дальше можно вести пальцем
+      e.preventDefault();          // и никакой инерции прокрутки от этого касания
       dc.sweeping = true;
       lockScroll(true);
       sweepAt(e.clientX, e.clientY);
@@ -960,6 +961,11 @@ function lockScroll(on){
   const x = scroller.scrollLeft;
   scroller.style.overflowX = on ? 'hidden' : '';
   scroller.scrollLeft = x;
+  // Одного overflow мало: сафари решает, что жест — это прокрутка, раньше
+  // чем до нас доходит pointermove, и дальше листает блок, что бы мы ни
+  // делали. Панорамирование надо запрещать самому браузеру, через
+  // touch-action, — тогда сбор ведением не превращается в скролл.
+  if(V2) scroller.classList.toggle('nopan', on);
 }
 
 function startSweep(){
