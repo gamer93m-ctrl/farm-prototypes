@@ -301,3 +301,66 @@
 .seed .lock{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
   width:38px;height:38px;border-radius:50%;background:#f6f7f8;color:#000;
   display:grid;place-items:center;font-size:17px}
+
+/* ═══════════ ВТОРАЯ ВЕРСИЯ ГЕНЕРАТОРА ═══════════
+   Всё под #phone.v2 — первая версия и оба онбординга сюда не попадают. */
+
+/* ─── B · удержание: кольцо зарядки под пальцем ───
+   Пока держишь, из центра ячейки разрастается пятно. Дошло до края —
+   режим взвёлся. Даёт понять, что ждать надо ещё чуть-чуть. */
+#phone.v2 .cell.holding::after{
+  content:"";position:absolute;left:50%;top:50%;width:140%;aspect-ratio:1;
+  transform:translate(-50%,-50%) scale(0);border-radius:50%;
+  background:rgba(66,139,249,.45);z-index:1;
+  animation:holdCharge var(--hold-ms,320ms) linear forwards;
+}
+@keyframes holdCharge{ from{transform:translate(-50%,-50%) scale(0)}
+                       to  {transform:translate(-50%,-50%) scale(1)} }
+
+/* ─── B · ручка на пальце ───
+   Не инструмент, а индикатор: пока она висит на пальце, идёт массовый сбор. */
+#handy{
+  position:fixed;left:0;top:0;width:56px;height:56px;z-index:95;
+  pointer-events:none;opacity:0;
+  font-size:38px;line-height:56px;text-align:center;
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,.55));
+  transition:transform .22s cubic-bezier(.22,1.4,.5,1), opacity .18s ease;
+}
+#handy.on{opacity:1}
+
+/* пока ручка на пальце — кнопка на своём месте пустует.
+   Держим её габарит, чтобы ряд с пейджером не дёргался */
+#phone.v2 #collect.handoff{visibility:hidden}
+
+/* ─── C · режим дёрганья ───
+   Галочек и заливки выделения во второй версии нет: роль индикатора
+   играет само дёрганье, как на домашнем экране айфона. */
+#phone.v2[data-ver="select"] .cell.sel::before,
+#phone.v2[data-ver="select"] .cell.sel::after{content:none}
+
+#phone.v2.jiggle .cell.ready{
+  animation:jiggle .28s linear var(--jd,0ms) infinite;
+  transform-origin:50% 50%;
+}
+@keyframes jiggle{
+  0%  { transform:rotate(-1.4deg) translate(-.4px,.3px) }
+  50% { transform:rotate(1.4deg)  translate(.4px,-.3px) }
+  100%{ transform:rotate(-1.4deg) translate(-.4px,.3px) }
+}
+/* растущие уходят на второй план: в режиме сбора они не участвуют */
+#phone.v2.jiggle .cell:not(.ready){opacity:.45;transition:opacity .2s}
+
+/* выщелкивание собранной ячейки */
+#phone.v2 .cell.pop{animation:popOut .28s cubic-bezier(.3,1.5,.5,1)}
+@keyframes popOut{
+  0%  {transform:scale(1)}
+  40% {transform:scale(1.18)}
+  100%{transform:scale(1)}
+}
+
+/* Панель режима сбора не должна появляться «в поток»: она сдвигала сетку
+   прямо под пальцем, и ячейка уезжала из-под касания в момент входа
+   в режим. В версии C место под неё держим всегда. */
+#phone.v2[data-ver="select"] #actionbar[hidden]{
+  display:flex;visibility:hidden;
+}
