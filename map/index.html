@@ -179,11 +179,15 @@
     width:100%;max-width:330px;text-align:left}
   #intro li{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.07);
     border-radius:14px;padding:13px 15px;font-size:15px;font-weight:500}
+  /* цифру центрируем гридом, а размер задаём отдельными свойствами:
+     короткая запись font со словом inherit невалидна и отбрасывалась,
+     из-за чего цифра наследовала кегль пункта и сидела не по центру */
   #intro li span{width:26px;height:26px;flex:0 0 auto;border-radius:50%;background:#ffd60a;color:#000;
-    font:700 13px/26px inherit;text-align:center}
+    display:grid;place-items:center;
+    font-family:inherit;font-size:13px;font-weight:700;line-height:1}
   #intro .note{margin-top:20px;color:#6f6f78;font-size:13px;line-height:1.4;max-width:300px}
   #intro .go{margin-top:auto;width:100%;background:#ffd60a;color:#000;border:0;border-radius:14px;
-    padding:17px;font:600 17px/1 inherit}
+    padding:17px;font-family:inherit;font-size:17px;font-weight:600;line-height:1}
   #intro .go:active{transform:scale(.98)}
   #intro.on .hero{animation:medalpop .6s cubic-bezier(.34,1.5,.64,1) both}
   #intro.on .logo{animation:lvlrise .45s var(--ease) .1s both}
