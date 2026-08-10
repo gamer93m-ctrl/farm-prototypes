@@ -122,6 +122,13 @@ const FARM_MARKUP = String.raw`
     </div>
   </div>
 
+  <div id="finish" class="veil">
+    <img class="cat" alt="">
+    <h2>Спасибо!</h2>
+    <p>Вы прошли весь путь и выполнили заказ. Деревня в надёжных руках</p>
+    <button class="done">Готово</button>
+  </div>
+
   <div id="level">
     <button class="close">Закрыть</button>
     <div class="medal"><img src="../assets/onboarding/Frame 2147224235.svg" alt=""><span>2</span></div>
@@ -878,6 +885,7 @@ function scNext(){
     tapcatch.classList.remove('on');
     scWait = null;
     dock.classList.remove('hide');
+    showFinish();
     return;
   }
   const st = SCRIPT[sc];
@@ -1284,10 +1292,33 @@ function onCellsChanged(st){
 gen0.on('change', onCellsChanged);
 cafeGen.on('change', onCellsChanged);
 
+/* Финальная спасибка: прогон закончен, дальше свободная игра. */
+const finishBox = document.getElementById('finish');
+function showFinish(){
+  finishBox.classList.add('on');
+  setTimeout(confetti, 400);
+}
+finishBox.querySelector('.done').addEventListener('click', () => finishBox.classList.remove('on'));
+
+/* Кот на финальном экране. Файла может ещё не быть, поэтому перебираем
+   расширения по очереди, а если не нашлось ни одного, показываем эмодзи.
+   Достаточно положить картинку в assets/onboarding/cat.png и она подхватится. */
+(function pickCat(names){
+  const img = finishBox.querySelector('img.cat');
+  if(!img) return;
+  if(!names.length){
+    img.replaceWith(Object.assign(document.createElement('div'),
+      { className:'cat none', textContent:'\u{1F63A}' }));
+    return;
+  }
+  img.onerror = () => pickCat(names.slice(1));
+  img.src = '../assets/onboarding/' + names[0];
+})(['cat.png','cat.jpg','cat.jpeg','cat.webp']);
+
 /* прототип всегда стартует с начала истории — и мир вместе с ней */
 resetWorld();
 
 /* наружу отдаём только ручки для отладки и прогонов */
-return { gen:gen0, cafe:cafeGen, level:levelBox, story, dock, point,
+return { gen:gen0, cafe:cafeGen, level:levelBox, finish:finishBox, story, dock, point,
          step:() => sc, script:SCRIPT };
 };
