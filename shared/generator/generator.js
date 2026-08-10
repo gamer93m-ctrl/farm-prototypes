@@ -1073,33 +1073,65 @@ function parkPoint(){
     : { x: r.left + r.width / 2,     y: r.top + r.height / 2 };
 }
 
+/* Плавность нужна ровно на двух перелётах — с кнопки на палец и обратно.
+   Пока ручка на пальце, её быть не должно: с transition на transform
+   каждое движение пальца ручка «доезжает» за 220 мс и волочится следом.
+   Поэтому перелёты — с анимацией, слежение за пальцем — без. */
+const HANDY_FLY = 220;
+const HANDY_EASE = `transform ${HANDY_FLY}ms cubic-bezier(.22,1.4,.5,1), opacity .18s ease`;
+let handyTimer = null;
+
+/* translate3d, а не translate: сафари так держит ручку на своём слое
+   и не перерисовывает её вместе с сеткой на каждом кадре */
+const handyAt = (x, y, k) =>
+  `translate3d(${x-28}px, ${y-28}px, 0) scale(${uiScale*k})`;
+
+/* pointermove на айфоне сыпется чаще кадров, а сам обработчик и так
+   дёргает elementFromPoint по сетке. Позицию ручки копим и красим один
+   раз за кадр — иначе на сафари это выглядит как заедание. */
+let handyRaf = 0, handyXY = null;
+
+function handyPaint(){
+  handyRaf = 0;
+  if(!handyXY || !handy || !handy.classList.contains('on')) return;
+  handy.style.transform = handyAt(handyXY.x, handyXY.y, 1);
+}
+
 function armHarvest(x, y){
   const h = handyEl(), p = parkPoint();
   // пока ручка на пальце, кнопку прячем: иначе рук на экране две
   collectTool.classList.add('handoff');
+  clearTimeout(handyTimer);
   h.style.transition = 'none';                 // ставим в парковку без анимации
-  h.style.transform = `translate(${p.x-28}px, ${p.y-28}px) scale(${uiScale*.4})`;
+  h.style.transform = handyAt(p.x, p.y, .4);
   h.classList.add('on');
   void h.offsetWidth;                          // и только потом отпускаем к пальцу
-  h.style.transition = '';
-  handyTo(x, y);
+  h.style.transition = HANDY_EASE;
+  handyXY = { x, y };
+  h.style.transform = handyAt(x, y, 1);
+  // долетела — снимаем плавность, дальше ручка сидит ровно под пальцем
+  handyTimer = setTimeout(() => { h.style.transition = ''; }, HANDY_FLY);
   phone.classList.add('harvest');
 }
 
 function handyTo(x, y){
   if(!handy || !handy.classList.contains('on')) return;
-  handy.style.transform = `translate(${x-28}px, ${y-28}px) scale(${uiScale})`;
+  handyXY = { x, y };
+  if(!handyRaf) handyRaf = requestAnimationFrame(handyPaint);
 }
 
 function disarmHarvest(){
   if(!phone.classList.contains('harvest')) return;
   phone.classList.remove('harvest');
   if(!handy) return;
+  clearTimeout(handyTimer);
+  cancelAnimationFrame(handyRaf); handyRaf = 0; handyXY = null;
   const p = parkPoint();
-  handy.style.transform = `translate(${p.x-28}px, ${p.y-28}px) scale(${uiScale*.4})`;
+  handy.style.transition = HANDY_EASE;          // обратный перелёт снова плавный
+  handy.style.transform = handyAt(p.x, p.y, .4);
   handy.classList.remove('on');
   // кнопку возвращаем, когда ручка долетела до места — иначе они мигнут вдвоём
-  setTimeout(() => collectTool.classList.remove('handoff'), 220);
+  setTimeout(() => collectTool.classList.remove('handoff'), HANDY_FLY);
 }
 
 /* ─── режим дёрганья ─── */

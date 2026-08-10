@@ -323,8 +323,14 @@
   position:fixed;left:0;top:0;width:56px;height:56px;z-index:95;
   pointer-events:none;opacity:0;
   font-size:38px;line-height:56px;text-align:center;
-  filter:drop-shadow(0 4px 10px rgba(0,0,0,.55));
-  transition:transform .22s cubic-bezier(.22,1.4,.5,1), opacity .18s ease;
+  /* Своя композиционная плашка: без неё сафари на каждом кадре
+     перерисовывает ручку вместе с сеткой, и жест начинает заедать.
+     drop-shadow под эмодзи тут был как раз тем, что это добивало —
+     фильтр пересчитывается на каждом сдвиге, поэтому его нет. */
+  transform:translate3d(0,0,0);
+  will-change:transform,opacity;
+  backface-visibility:hidden;
+  transition:opacity .18s ease;   /* transform — только на перелётах, из js */
 }
 #handy.on{opacity:1}
 
