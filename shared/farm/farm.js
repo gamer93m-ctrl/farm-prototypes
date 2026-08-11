@@ -126,6 +126,7 @@ const FARM_MARKUP = String.raw`
     <img class="pic" alt="">
     <h2>Спасибо!</h2>
     <p>Вы прошли весь путь и выполнили заказ. Деревня в надёжных руках</p>
+    <button class="done">Готово</button>
   </div>
 
   <div id="level">
@@ -1305,6 +1306,9 @@ cafeGen.on('change', onCellsChanged);
 
 /* Финальная спасибка: прогон закончен, дальше свободная игра. */
 const finishBox = document.getElementById('finish');
+/* «Готово» отпускает человека в свободную игру: карта остаётся как есть,
+   со всем построенным, здания открываются обычным тапом. */
+finishBox.querySelector('.done').addEventListener('click', () => finishBox.classList.remove('on'));
 function showFinish(){
   finishBox.classList.add('on');
   setTimeout(confetti, 400);
