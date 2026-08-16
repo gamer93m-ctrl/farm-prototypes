@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Онбординг, вариант 1</title>
-<link rel="stylesheet" href="../shared/generator/generator.css?v=202608062314">
+<link rel="stylesheet" href="../shared/generator/generator.css?v=202608161655">
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
   html,body{margin:0;height:100%;background:#d8c08c;overflow:hidden;overscroll-behavior:none;
@@ -240,15 +240,48 @@
     font-size:15px;line-height:normal;font-weight:600;letter-spacing:-.24px;
     box-shadow:0 8px 24px rgba(0,0,0,.5)}
 
+  /* ═══ демонстрация жеста: рука берёт ресурс и раскладывает по грядкам ═══ */
   #genDemo{position:fixed;inset:0;z-index:69;pointer-events:none;display:none}
   #genDemo.on{display:block}
-  #genDemo path{stroke:#ffd60a;stroke-width:5;stroke-dasharray:12 10;stroke-linecap:round;fill:none}
-  #genDemo polygon{fill:#ffd60a}
-  #genDemo .runner{position:absolute;left:0;top:0;width:60px;height:60px;margin:-30px 0 0 -30px;
-    offset-rotate:0deg;animation:ride 3.2s cubic-bezier(.5,0,.5,1) infinite}
-  #genDemo .runner img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 6px 12px rgba(0,0,0,.6))}
-  @keyframes ride{
-    0%{offset-distance:0%;opacity:0;transform:scale(.75)}
+
+  #genDemo .hand{position:absolute;left:0;top:0;transform:translate(-50%,-50%);
+    opacity:0;transition:opacity .18s}
+  #genDemo .hand.show{opacity:1}
+
+  /* палец: белый кружок с кольцом — читается как касание */
+  #genDemo .dot{display:block;width:42px;height:42px;border-radius:50%;
+    background:rgba(255,255,255,.95);box-shadow:0 6px 18px rgba(0,0,0,.45);
+    transition:transform .12s var(--ease)}
+  #genDemo .hand.press .dot{transform:scale(.78)}
+
+  /* волна от нажатия */
+  #genDemo .wave{position:absolute;left:50%;top:50%;width:42px;height:42px;margin:-21px 0 0 -21px;
+    border-radius:50%;border:3px solid rgba(255,255,255,.9);opacity:0}
+  #genDemo .hand.press .wave{animation:demoWave .5s ease-out}
+  @keyframes demoWave{0%{opacity:.9;transform:scale(.6)}100%{opacity:0;transform:scale(2.3)}}
+
+  /* то, что несём в руке */
+  #genDemo .carry{position:absolute;left:50%;top:-10px;width:56px;height:56px;object-fit:contain;
+    transform:translate(-50%,-100%) scale(.6);opacity:0;
+    transition:transform .18s var(--ease),opacity .18s;
+    filter:drop-shadow(0 8px 14px rgba(0,0,0,.55))}
+  #genDemo .hand.hold .carry{transform:translate(-50%,-100%) scale(1);opacity:1}
+
+  /* ячейка, над которой рука прямо сейчас */
+  .cell.demoHot{animation:demoHot .32s var(--ease)}
+  @keyframes demoHot{0%{transform:scale(1)}45%{transform:scale(.86)}100%{transform:scale(1)}}
+
+  /* куда можно класть: мягкая пульсирующая рамка, пока идёт показ */
+  .cell.demoTarget::after{content:"";position:absolute;inset:0;border-radius:var(--cell-radius);
+    box-shadow:inset 0 0 0 2px rgba(255,214,10,.75);animation:demoTarget 1.5s ease-in-out infinite;
+    pointer-events:none}
+  @keyframes demoTarget{0%,100%{opacity:.25}50%{opacity:1}}
+
+  /* след: ресурс, оставленный в ячейке во время показа */
+  #genDemo .drop{position:absolute;width:44px;height:44px;object-fit:contain;
+    transform:translate(-50%,-50%);animation:demoDrop .5s ease-out forwards}
+  @keyframes demoDrop{0%{opacity:.95;transform:translate(-50%,-70%) scale(1.05)}
+                      100%{opacity:0;transform:translate(-50%,-50%) scale(.8)}}
     8%{opacity:1;transform:scale(1)}
     88%{offset-distance:100%;opacity:1;transform:scale(1)}
     100%{offset-distance:100%;opacity:0;transform:scale(.75)}}
@@ -597,7 +630,7 @@
   </div>
 
 
-<script src="../shared/generator/generator.js?v=202608062314"></script>
+<script src="../shared/generator/generator.js?v=202608161655"></script>
 <script>
 'use strict';
 
@@ -1572,31 +1605,149 @@ function genBubble(text, withDemo){
     const top = anchor.getBoundingClientRect().top - genSpeech.offsetHeight - 34;
     genSpeech.style.top = Math.max(50, top) + 'px';
   }
-  if(withDemo) drawGenDemo(); else genDemo.classList.remove('on');
+  if(withDemo) runDemo('seed'); else stopDemo();
 }
 function hideGenHint(){
   clearTimeout(reseedTimer);
   genSpeech.classList.remove('on');
-  genDemo.classList.remove('on');
+  stopDemo();
 }
 
-/* зерно едет от лотка через весь ряд — путь невидимый, виден только жест */
-function drawGenDemo(){
+/* ═══ Показ жеста ═══
+   Раньше по невидимой дуге ехала одна картинка, и люди не понимали,
+   что ресурс нужно тащить. Теперь показываем сам жест целиком: рука
+   подъезжает, нажимает, поднимает ресурс, ведёт по грядкам, и каждая
+   грядка на проход откликается. Крутится, пока человек не сделает сам. */
+
+let demoRaf = 0, demoTimers = [], demoToken = 0;
+
+function stopDemo(){
+  demoToken++;                 // прошлые запуски перестают что-либо делать
+  cancelAnimationFrame(demoRaf);
+  demoTimers.forEach(clearTimeout);
+  demoTimers = [];
+  genDemo.classList.remove('on');
+  genDemo.innerHTML = '';
+  document.querySelectorAll('.cell.demoTarget, .cell.demoHot')
+    .forEach(c => c.classList.remove('demoTarget', 'demoHot'));
+}
+const later = (fn, ms) => demoTimers.push(setTimeout(fn, ms));
+
+/* плавно ведём руку из точки в точку */
+function handTo(hand, from, to, ms, curve, onDone, onFrame){
+  const t0 = performance.now();
+  (function step(now){
+    const k = Math.min(1, (now - t0) / ms);
+    const e = k < .5 ? 2*k*k : 1 - Math.pow(-2*k + 2, 2)/2;   // мягкий разгон и торможение
+    const x = from.x + (to.x - from.x) * e;
+    const y = from.y + (to.y - from.y) * e - (curve ? Math.sin(e * Math.PI) * curve : 0);
+    hand.style.left = x + 'px';
+    hand.style.top  = y + 'px';
+    if(onFrame) onFrame(x, y);
+    if(k < 1) demoRaf = requestAnimationFrame(step);
+    else onDone && onDone();
+  })(t0);
+}
+
+const centerOf = el => {
+  const r = el.getBoundingClientRect();
+  return { x: r.left + r.width/2, y: r.top + r.height/2 };
+};
+
+/* отклик грядки: поджимается и получает след ресурса */
+function tapCell(cell, icon){
+  cell.classList.add('demoHot');
+  later(() => cell.classList.remove('demoHot'), 340);
+  if(!icon) return;
+  const c = centerOf(cell);
+  const drop = document.createElement('img');
+  drop.className = 'drop';
+  drop.src = icon;
+  drop.style.left = c.x + 'px';
+  drop.style.top  = c.y + 'px';
+  genDemo.appendChild(drop);
+  later(() => drop.remove(), 520);
+}
+
+/* kind: 'seed' — от лотка по грядкам, 'collect' — по готовым грядкам */
+function runDemo(kind){
+  stopDemo();
+  const my = demoToken;
+  const alive = () => my === demoToken;
   const cells = [...document.querySelectorAll(genHost + ' .cell')];
-  const src = document.querySelector(genHost + ' .seed:not(.locked)');
-  if(!src || !cells.length) return;
-  const rs = src.getBoundingClientRect();
-  const f = cells[0].getBoundingClientRect();
-  const l = cells[cells.length-1].getBoundingClientRect();
-  const x0 = rs.left + rs.width/2, y0 = rs.top + rs.height/2;
-  const y = f.top + f.height/2;
-  const x1 = f.left + f.width/2, x2 = l.left + l.width/2;
-  const d = `M ${x0} ${y0} C ${x0-60} ${y0-120}, ${x1-60} ${y+120}, ${x1} ${y} L ${x2} ${y}`;
-  // тащим то, что реально лежит в лотке: в генераторе зерно, в кофейне чашку
-  const icon = src.querySelector('img')?.src || '../assets/imgcoffe.png';
-  genDemo.innerHTML = `<div class="runner" style="offset-path:path('${d}')">
-      <img src="${icon}" alt=""></div>`;
+  if(!cells.length) return;
+
+  const targets = kind === 'seed'
+    ? cells.filter(c => !c.classList.contains('growing') && !c.classList.contains('ready'))
+    : cells.filter(c => c.classList.contains('ready'));
+  if(!targets.length) return;
+
+  const src = kind === 'seed' ? document.querySelector(genHost + ' .seed:not(.locked)') : null;
+  if(kind === 'seed' && !src) return;
+
+  const icon = kind === 'seed'
+    ? (src.querySelector('img')?.src || '../assets/imgcoffe.png')
+    : (targets[0].querySelector('img')?.src || null);
+
+  targets.forEach(c => c.classList.add('demoTarget'));
+
+  genDemo.innerHTML = `<div class="hand"><span class="wave"></span><span class="dot"></span>` +
+                      (kind === 'seed' ? `<img class="carry" src="${icon}" alt="">` : '') + `</div>`;
   genDemo.classList.add('on');
+  const hand = genDemo.querySelector('.hand');
+
+  const start = kind === 'seed' ? centerOf(src) : centerOf(targets[0]);
+  const above = { x: start.x, y: start.y - 90 };
+
+  hand.style.left = above.x + 'px';
+  hand.style.top  = above.y + 'px';
+
+  // 1. рука появляется и опускается на ресурс
+  later(() => alive() && hand.classList.add('show'), 40);
+  later(() => alive() && handTo(hand, above, start, 380, 0, () => {
+    if(!alive()) return;
+    // 2. нажатие
+    hand.classList.add('press');
+    later(() => {
+      if(!alive()) return;
+      hand.classList.remove('press');
+      if(kind === 'seed') hand.classList.add('hold');   // ресурс поднят
+      // 3. одно непрерывное ведение слева направо: именно в этом суть жеста,
+      //    поштучные тапы читались как «нажми на каждую»
+      const first = centerOf(targets[0]);
+      const last  = centerOf(targets[targets.length - 1]);
+      const marks = targets.map(c => ({ el:c, x:centerOf(c).x, hit:false }));
+
+      const sweep = () => {
+        if(!alive()) return;
+        handTo(hand, first, last, 240 + targets.length * 190, 0,
+          () => {
+            if(!alive()) return;
+            // 4. отпускаем и начинаем заново
+            hand.classList.remove('hold');
+            later(() => hand.classList.remove('show'), 140);
+            later(() => alive() && runDemo(kind), 900);
+          },
+          x => {
+            if(!alive()) return;
+            marks.forEach(m => {
+              if(!m.hit && x >= m.x - 4){
+                m.hit = true;
+                tapCell(m.el, kind === 'seed' ? icon : null);
+              }
+            });
+          });
+      };
+
+      // подводим руку к первой грядке дугой, дальше ведём без остановок
+      handTo(hand, start, first, 420, 70, () => {
+        if(!alive()) return;
+        tapCell(marks[0].el, kind === 'seed' ? icon : null);
+        marks[0].hit = true;
+        later(sweep, 80);
+      });
+    }, 260);
+  }), 420);
 }
 
 /* подсказка уходит, только когда реально взяли зерно из лотка */
@@ -1717,6 +1868,13 @@ levelBox.addEventListener('click', e => {
    Засеял не всё и отпустил — подсказку возвращаем: раньше она пропадала
    при первом же касании лотка и человек оставался без объяснений. */
 function onCellsChanged(st){
+  // собрал всё сам — дальше по сценарию, как после ускорения
+  if(genWait === 'collected' && st.ready === 0){
+    genWait = null;
+    hideGenHint();
+    closeGenerator();
+    return setTimeout(scNext, 380);
+  }
   if(genWait !== 'allSeeded') return;
   if(st.empty === 0){ genWait = null; return scNext(); }
   clearTimeout(reseedTimer);
@@ -1727,6 +1885,21 @@ function onCellsChanged(st){
 }
 gen0.on('change', onCellsChanged);
 cafeGen.on('change', onCellsChanged);
+
+/* Не ускорил, а дождался — предложение ускорить теряет смысл.
+   Убираем тултип и показываем, как собирать: иначе человек сидит
+   перед готовыми грядками с мёртвой кнопкой «Бесплатно». */
+setInterval(() => {
+  if(genWait !== 'boosted') return;
+  const st = activeGen.stats();
+  if(st.growing > 0 || st.ready === 0) return;
+
+  boostTip.classList.remove('on');
+  clearInterval(boostTimer);
+  genWait = 'collected';
+  genBubble('Выросло! Проведи пальцем по грядкам, чтобы забрать', false);
+  runDemo('collect');
+}, 400);
 
 /* Финальная спасибка: прогон закончен, дальше свободная игра. */
 const finishBox = document.getElementById('finish');
