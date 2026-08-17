@@ -377,3 +377,20 @@
 #phone.v2[data-ver="select"] #actionbar[hidden]{
   display:flex;visibility:hidden;
 }
+
+/* ─── B · «водишь пальцем»: стрелки листания ───
+   Свайп по сетке в этом режиме занят сбором, поэтому переключение блоков
+   вынесено в явный контрол. Стоят по бокам от точек пейджера: строка всё
+   равно пустая — ручка в этом режиме спрятана. */
+#phone.v2 .pagearrow{
+  position:absolute;top:50%;transform:translateY(-50%);
+  width:44px;height:44px;border:0;padding:0;background:none;
+  color:#fff;font-size:26px;line-height:1;
+  display:grid;place-items:center;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+#phone.v2 .pagearrow[hidden]{display:none}   /* display:grid перебивает [hidden] */
+#phone.v2 .pagearrow.l{left:81px}
+#phone.v2 .pagearrow.r{left:235px}
+#phone.v2 .pagearrow:disabled{opacity:.22;cursor:default}
+#phone.v2 .pagearrow:not(:disabled):active{opacity:.55}

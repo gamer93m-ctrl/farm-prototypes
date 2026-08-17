@@ -687,6 +687,51 @@ function updatePager(){
   [...pager.children].forEach((d,i) => d.classList.toggle('on', i === active));
   $('.fade.l').disabled = active === 0;
   $('.fade.r').disabled = active === MODES[state.mode] - 1;
+  if(arrowL){
+    arrowL.disabled = active === 0;
+    arrowR.disabled = active === MODES[state.mode] - 1;
+  }
+}
+
+/* ═══ V2: стрелки листания для режима «водишь пальцем» ═══
+
+   В этом режиме сетка целиком отдана под сбор, свайп по ней не листает —
+   и остаются только тап по краю экрана и жест на пейджере. Оба надо
+   сперва найти, а на тесте их не находят.
+
+   Место выбрано по остаточному принципу, но удачно: ручка в этом режиме
+   спрятана, и вся строка с пейджером пустая. Стрелки встают по бокам от
+   точек — рядом с тем самым индикатором, который показывает, где ты
+   сейчас. Сетку они не закрывают, соседние блоки по краям не перекрывают.
+
+   Только для «водишь пальцем»: в удержании справа стоит ручка, а в
+   остальных версиях свайп работает сам. */
+
+let arrowL = null, arrowR = null;
+
+function buildArrows(){
+  if(!V2 || arrowL) return;
+  const make = (side, glyph) => {
+    const b = document.createElement('button');
+    b.className = 'pagearrow ' + side;
+    b.textContent = glyph;
+    b.setAttribute('aria-label', side === 'l' ? 'Предыдущий блок' : 'Следующий блок');
+    b.hidden = true;
+    b.addEventListener('click', () =>
+      goToBlock(currentBlock() + (side === 'l' ? -1 : 1)));
+    $('.controls').appendChild(b);
+    return b;
+  };
+  arrowL = make('l', '‹');
+  arrowR = make('r', '›');
+}
+
+function syncArrows(){
+  if(!V2) return;
+  buildArrows();
+  const need = cfg.collect === 'direct' && cfg.direct === 'free' && MODES[state.mode] > 1;
+  arrowL.hidden = arrowR.hidden = !need;
+  if(need) updatePager();
 }
 
 /* ═══════════ ВЕРСИИ И НАСТРОЙКИ ═══════════
@@ -741,7 +786,7 @@ function applyCfg(){
   collectTool.hidden = (direct || select) && !holdHand;
   $('#devver').textContent = select ? 'C' : direct ? 'B' : 'A';
   if(!select) clearPicked();
-  if(V2){ stopJiggle(); disarmHarvest(); }
+  if(V2){ stopJiggle(); disarmHarvest(); syncArrows(); }
   $('#collectHint').textContent = (V2 && HINTS2.collect[cfg.collect]) || HINTS.collect[cfg.collect];
   $('#directHint').textContent = (V2 && HINTS2.direct[cfg.direct]) || HINTS.direct[cfg.direct];
 
