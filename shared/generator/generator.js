@@ -779,6 +779,10 @@ function applyCfg(){
   const direct = cfg.collect === 'direct';
   const select = cfg.collect === 'select';
   phone.dataset.ver = cfg.collect;
+  // Во второй версии подрежим тоже выносим в разметку: от него зависит,
+  // разрешено ли браузеру панорамировать сетку, а это решается статикой
+  // в CSS, а не в момент касания — см. ниже про touch-action.
+  if(V2) phone.dataset.direct = cfg.direct;
   $('#directRow').hidden = !direct;
   // ручка живёт в версии A, а во второй версии ещё и в B с удержанием:
   // там она стоит на своём месте всегда и улетает на палец, когда режим взвёлся

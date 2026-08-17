@@ -351,6 +351,17 @@
 #phone.v2.jiggle #scroller,
 #phone.v2 #scroller.nopan{touch-action:none;overscroll-behavior:contain}
 
+/* ─── и главное для телефона ───
+   touch-action браузер читает в момент touchstart и там же решает, скролл
+   это или нет. Класс, повешенный из pointerdown, для текущего жеста уже
+   опоздал: сафари начинает листать, шлёт pointercancel — и заметание
+   обрывается на середине. Поэтому в режиме «водишь пальцем», где свайп
+   не листает вообще никогда, запрет стоит статикой, до всякого касания.
+   Листают тут стрелками, краями экрана и пейджером — они вне скроллера. */
+#phone.v2[data-ver="direct"][data-direct="free"] #scroller{
+  touch-action:none;overscroll-behavior:contain;
+}
+
 #phone.v2.jiggle .cell.ready{
   animation:jiggle .28s linear var(--jd,0ms) infinite;
   transform-origin:50% 50%;
