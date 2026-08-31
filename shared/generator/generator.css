@@ -405,3 +405,38 @@
 #phone.v2 .pagearrow.r{left:235px}
 #phone.v2 .pagearrow:disabled{opacity:.22;cursor:default}
 #phone.v2 .pagearrow:not(:disabled):active{opacity:.55}
+
+/* ─── отлёт собранного ресурса ───
+   Срыв: ресурс коротко присаживается, будто его подцепили, потом уходит
+   вверх, уменьшается и растворяется. Смещения в процентах от самого
+   элемента — ячейка меняет размер под экран, а жест должен читаться
+   одинаково и на 34px, и на 56px. */
+.harvestfly{
+  position:fixed;z-index:92;pointer-events:none;
+  object-fit:contain;
+  will-change:transform,opacity;
+  backface-visibility:hidden;
+  animation:harvestFly var(--fly,460ms) cubic-bezier(.2,.75,.28,1) forwards;
+}
+@keyframes harvestFly{
+  0%  {transform:translate3d(0,0,0)      scale(1);   opacity:1}
+  18% {transform:translate3d(0,6%,0)     scale(1.16);opacity:1}
+  100%{transform:translate3d(0,-78%,0)   scale(.58); opacity:0}
+}
+
+/* вспышка на освободившейся грядке: короткий тёплый отблеск и всё.
+   Идёт после .holding, чтобы перебить его при совпадении классов */
+#phone.v2 .cell.harvested::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;z-index:1;
+  background:radial-gradient(circle at 50% 58%,rgba(255,255,255,.3),transparent 68%);
+  animation:harvestFlash 420ms ease-out forwards;
+  pointer-events:none;
+}
+@keyframes harvestFlash{ from{opacity:1} to{opacity:0} }
+
+/* кому анимации мешают — остаётся только растворение, без полёта */
+@media (prefers-reduced-motion: reduce){
+  .harvestfly{animation:harvestFade 200ms linear forwards}
+  @keyframes harvestFade{ from{opacity:1} to{opacity:0} }
+  #phone.v2 .cell.harvested::after{animation-duration:200ms}
+}

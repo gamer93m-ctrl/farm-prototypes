@@ -525,6 +525,7 @@ function apply(x, y){
     state.cells[idx] = { state:'growing', typeId:drag.typeId, endsAt: Date.now() + t.growMs };
   } else {
     if(c.state !== 'ready') return;                       // правило 3
+    flyAway(idx);                   // сбор ручкой идёт мимо collect() — вешаем отлёт и здесь
     state.cells[idx] = { state:'empty' };
   }
 
@@ -555,6 +556,7 @@ scroller.addEventListener('click', e => {
 });
 
 function collect(idx){
+  flyAway(idx);                     // до очистки: улетающему нужен ресурс, который ещё в ячейке
   state.cells[idx] = {state:'empty'};
   if(idx === selCell) clearSel();
   paintCell(idx); countFree(); hideTip(); save();
@@ -1192,6 +1194,59 @@ function disarmHarvest(){
   handy.classList.remove('on');
   // кнопку возвращаем, когда ручка долетела до места — иначе они мигнут вдвоём
   setTimeout(() => collectTool.classList.remove('handoff'), HANDY_FLY);
+}
+
+/* ─── отлёт собранного ─── ═══════════════════════════════════════════
+
+   Сбор был мгновенным: ячейка просто гасла, и на быстром ведении
+   не читалось, что именно ты сейчас забрал. Теперь ресурс срывается —
+   коротко присаживается, уходит вверх, уменьшается и растворяется, —
+   а на освободившейся грядке остаётся мягкая вспышка.
+
+   Копия живёт рядом с #ghost, а не внутри #phone: телефон масштабируется
+   трансформом и режет overflow, изнутри улетающий ресурс обрезался бы
+   по краю экрана.
+
+   Пока только в удержании: там сбор — отдельное осознанное действие,
+   и отлёт его подтверждает. В остальных режимах включается одной
+   строчкой в flyOn().                                                 */
+
+const FLY_MS = 460;
+
+const flyOn = () => V2 && cfg.collect === 'direct' && cfg.direct === 'hold';
+
+function flyAway(idx){
+  if(!flyOn()) return;
+  const el = cellEls[idx], c = state.cells[idx];
+  if(!el || !c || c.state !== 'ready') return;
+  const t = byId(c.typeId);
+  if(!t) return;
+
+  // Ячейка под пальцем поджата (.hov, scale .88), и копия рождалась бы
+  // уменьшенной. Разжимаем обратно от центра: срываться ресурс должен
+  // в свою натуральную величину, иначе отлёт начинается с рывка.
+  const r = el.getBoundingClientRect();
+  const k = el.classList.contains('hov') ? 0.88 : 1;
+  const w = r.width / k, h = r.height / k;
+  const left = r.left + r.width / 2 - w / 2;
+  const top  = r.top  + r.height / 2 - h / 2;
+
+  const fly = document.createElement('img');
+  fly.className = 'harvestfly';
+  fly.src = t.image;
+  fly.alt = '';
+  fly.style.cssText = `left:${left}px;top:${top}px;width:${w}px;height:${h}px`;
+  host.appendChild(fly);
+
+  // снимаем по событию, таймер — страховка на случай прерванной анимации
+  const drop = () => fly.remove();
+  fly.addEventListener('animationend', drop, { once:true });
+  setTimeout(drop, FLY_MS + 300);
+
+  el.classList.remove('harvested');
+  void el.offsetWidth;
+  el.classList.add('harvested');
+  setTimeout(() => el.classList.remove('harvested'), FLY_MS);
 }
 
 /* ─── режим дёрганья ─── */
